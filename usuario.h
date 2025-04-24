@@ -1,55 +1,40 @@
 #ifndef USUARIO_H
 #define USUARIO_H
 
-#include <string>
-using namespace std;
+#include <QString>
 
 class Usuario
 {
 public:
-    Usuario(string,string);
-    string getNombre(){
-        return nombre;
-    }
-    string getUsername(){
-        return username;
-    }
-    string getPassword(){
-        return password;
-    }
-    int getEdad(){
-        return edad;
-    }
-    string getCorreo(){
-        return correo;
-    }
+    Usuario();
+    Usuario(QString nombre, QString username);
 
-    string getPregunta(){
-        return pregunta;
-    }
-    string getResp(){
-        return respuesta;
-    }
+    QString getNombre() const { return nombre; }
+    QString getUsername() const { return username; }
+    QString getPassword() const { return password; }
+    int getEdad() const { return edad; }
+    QString getCorreo() const { return correo; }
+    QString getPregunta() const { return pregunta; }
+    QString getResp() const { return respuesta; }
 
-    void setUser(string user){
-        username=username;
-    }
+    void setUser(QString user) { username = user; }
+    void setPassword(QString pass) { password = pass; }
+    void setNombre(QString name){ nombre = name; }
+    void setEdad(int age){ edad = age; }
+    void setCorreo(QString email){ correo = email; }
+    void setPregunta(QString question) { pregunta = question; }
+    void setResp(QString answer){ respuesta = answer;}
 
-    void setPassword(string pass){
-        password=pass;
-    }
-
-    bool validarContrasena(const string& pass) const;
+    bool validarContrasena(const QString& pass) const;
 
 private:
-    string nombre;
-    string username;
-    string password;
-    int edad;
-    string correo;
-    string pregunta;
-    string respuesta;
-
+    QString nombre;
+    QString username;
+    QString password;
+    int edad = 0;
+    QString correo;
+    QString pregunta;
+    QString respuesta;
 };
 
 #endif // USUARIO_H
