@@ -16,6 +16,7 @@ public:
     QString getCorreo() const { return correo; }
     QString getPregunta() const { return pregunta; }
     QString getResp() const { return respuesta; }
+    QString getPerfil() const { return perfil; }
 
     void setUser(QString user) { username = user; }
     void setPassword(QString pass) { password = pass; }
@@ -24,6 +25,7 @@ public:
     void setCorreo(QString email){ correo = email; }
     void setPregunta(QString question) { pregunta = question; }
     void setResp(QString answer){ respuesta = answer;}
+    void setPerfil(QString avatar) { perfil = avatar; }
 
     bool validarContrasena(const QString& pass) const;
 
@@ -35,6 +37,7 @@ private:
     QString correo;
     QString pregunta;
     QString respuesta;
+    QString perfil;
 };
 
 #endif // USUARIO_H

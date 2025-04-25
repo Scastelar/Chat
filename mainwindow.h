@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "Cuentas.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -34,5 +35,6 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    Usuario* usuarioActual = nullptr;
 };
 #endif // MAINWINDOW_H

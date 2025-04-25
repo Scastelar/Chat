@@ -13,16 +13,15 @@ private:
     QString archivo;
 
 public:
-    Cuentas(const QString& archivoNombre)
-        : archivo(archivoNombre) {}
+    explicit Cuentas(QString archivoNombre);
 
     // Metodos
     bool isUsuarioUnico(const QString& user);
     void escribirUsuario(const Usuario& usuario);
-    bool iniciarSesion(const QString& nombreUsuario, const QString& contrasena);
-    void crearUsuario(QString nombre, QString contrasena);
+    bool iniciarSesion(const QString& user, const QString& pass, Usuario& usuarioEncontrado);
+    void crearUsuario(QString nombre, QString username, QString correo, QString pregunta,
+                      int edad, QString password, QString respuesta, QString avatarPath);
     void eliminarUsuario(const QString& nombre);
-
     void leerUsuarios(QVector<Usuario>& usuarios);
 };
 
