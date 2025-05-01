@@ -33,6 +33,34 @@ bool Cuentas::isUsuarioUnico(const QString& user){
     return true;
 }
 
+bool Cuentas::getUsuarioPorNombre(const QString& username, Usuario& usuarioEncontrado) {
+    QFile file("cuentas.txt");
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return false;
+
+    QTextStream in(&file);
+    while (!in.atEnd()) {
+        QString nombre = in.readLine().trimmed();
+        QString user = in.readLine().trimmed();
+        QString correo = in.readLine().trimmed();
+        QString pregunta = in.readLine().trimmed();
+        int edad = in.readLine().trimmed().toInt();
+        QString password = in.readLine().trimmed();
+        QString respuesta = in.readLine().trimmed();
+        QString perfil = in.readLine().trimmed();
+
+        if (user == username) {
+            usuarioEncontrado = Usuario(user,password);
+            file.close();
+            return true;
+        }
+    }
+
+    file.close();
+    return false;
+}
+
+
 void Cuentas::escribirUsuario(const Usuario& usuario) {
     QFile file(archivo);
     if (file.open(QIODevice::Append | QIODevice::Text)) {

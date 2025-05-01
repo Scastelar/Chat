@@ -23,6 +23,8 @@ public:
                       int edad, QString password, QString respuesta, QString avatarPath);
     void eliminarUsuario(const QString& nombre);
     void leerUsuarios(QVector<Usuario>& usuarios);
+   bool getUsuarioPorNombre(const QString& username, Usuario& usuarioEncontrado);
+
 };
 
 #endif // CUENTAS_H
