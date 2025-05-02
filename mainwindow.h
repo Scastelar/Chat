@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QListWidgetItem>
+#include <QGridLayout>
 #include "Cuentas.h"
 
 QT_BEGIN_NAMESPACE
@@ -48,9 +49,18 @@ private slots:
 
    // void on_pushButton_10_clicked();
 
+    void on_pushButton_10_clicked();
+
 private:
     Ui::MainWindow *ui;
     Usuario* usuarioActual = nullptr;
-     Usuario usuarioSeleccionado;
+    Usuario usuarioSeleccionado;
+    void cargarContactos();
+    void mostrarChatConContacto(const QString &nombreContacto);
+    QGridLayout *stickersLayout;
+    QString stickerSeleccionado;
+    void cargarStickers();
+    void mostrarStickerEnChat(const QString &remitente, const QString &stickerPath, const QString &fecha);
+    void guardarMensaje(const QString &archivo, const QString &remitente, const QString &mensaje, const QString &fecha);
 };
 #endif // MAINWINDOW_H

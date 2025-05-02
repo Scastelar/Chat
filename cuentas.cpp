@@ -33,30 +33,46 @@ bool Cuentas::isUsuarioUnico(const QString& user){
     return true;
 }
 
-bool Cuentas::getUsuarioPorNombre(const QString& username, Usuario& usuarioEncontrado) {
-    QFile file("cuentas.txt");
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+bool Cuentas::getUsuarioPorNombre(const QString& username, Usuario& usuarioEncontrado)
+{
+    QFile file(archivo);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qDebug() << "Error al abrir cuentas.txt";
         return false;
+    }
+
+    QString usernameLower = username.toLower().trimmed();
+    qDebug() << "Buscando usuario:" << usernameLower;
 
     QTextStream in(&file);
     while (!in.atEnd()) {
-        QString nombre = in.readLine().trimmed();
-        QString user = in.readLine().trimmed();
-        QString correo = in.readLine().trimmed();
-        QString pregunta = in.readLine().trimmed();
-        int edad = in.readLine().trimmed().toInt();
-        QString password = in.readLine().trimmed();
-        QString respuesta = in.readLine().trimmed();
-        QString perfil = in.readLine().trimmed();
+        QString line = in.readLine().trimmed();
+        if(line.isEmpty()) continue;
 
-        if (user == username) {
-            usuarioEncontrado = Usuario(user,password);
+        QStringList parts = line.split(";");
+        if(parts.size() < 8) {
+            qDebug() << "Línea mal formada:" << line;
+            continue;
+        }
+
+        QString storedUser = parts[0].toLower().trimmed();
+        qDebug() << "Usuario en archivo:" << storedUser;
+
+        if (storedUser == usernameLower) {
+            usuarioEncontrado = Usuario(parts[0], parts[1]);
+            usuarioEncontrado.setNombre(parts[2]);
+            usuarioEncontrado.setCorreo(parts[3]);
+            usuarioEncontrado.setPregunta(parts[4]);
+            usuarioEncontrado.setResp(parts[5]);
+            usuarioEncontrado.setEdad(parts[6].toInt());
+            usuarioEncontrado.setPerfil(parts[7]);
             file.close();
+            qDebug() << "Usuario encontrado!";
             return true;
         }
     }
-
     file.close();
+    qDebug() << "Usuario no encontrado en archivo";
     return false;
 }
 
