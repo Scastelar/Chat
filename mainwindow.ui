@@ -650,6 +650,9 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
         <property name="text">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
+        <property name="scaledContents">
+         <bool>true</bool>
+        </property>
        </widget>
        <widget class="QStackedWidget" name="stackedWidget_3">
         <property name="geometry">
@@ -698,7 +701,7 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
            <rect>
             <x>160</x>
             <y>330</y>
-            <width>291</width>
+            <width>311</width>
             <height>31</height>
            </rect>
           </property>
@@ -706,9 +709,9 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
          <widget class="QPushButton" name="pushButton_10">
           <property name="geometry">
            <rect>
-            <x>470</x>
+            <x>490</x>
             <y>330</y>
-            <width>131</width>
+            <width>91</width>
             <height>31</height>
            </rect>
           </property>
@@ -720,9 +723,9 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
           <property name="geometry">
            <rect>
             <x>160</x>
-            <y>80</y>
-            <width>301</width>
-            <height>241</height>
+            <y>70</y>
+            <width>311</width>
+            <height>251</height>
            </rect>
           </property>
          </widget>
@@ -740,7 +743,7 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
           <property name="geometry">
            <rect>
             <x>520</x>
-            <y>60</y>
+            <y>30</y>
             <width>49</width>
             <height>16</height>
            </rect>
@@ -749,14 +752,17 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
            <string>Stickers</string>
           </property>
          </widget>
-         <widget class="QScrollArea" name="scroll">
+         <widget class="QScrollArea" name="scrollAreaStickers">
           <property name="geometry">
            <rect>
             <x>480</x>
-            <y>80</y>
-            <width>120</width>
+            <y>60</y>
+            <width>121</width>
             <height>191</height>
            </rect>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: rgb(250, 199, 200);</string>
           </property>
           <property name="widgetResizable">
            <bool>true</bool>
@@ -766,33 +772,31 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>118</width>
+             <width>119</width>
              <height>189</height>
             </rect>
            </property>
-           <widget class="QWidget" name="scrollAreaWidgetContents_3" native="true">
-            <property name="geometry">
-             <rect>
-              <x>0</x>
-              <y>0</y>
-              <width>120</width>
-              <height>191</height>
-             </rect>
-            </property>
-           </widget>
+           <layout class="QGridLayout" name="gridLayout">
+            <item row="0" column="0">
+             <widget class="QWidget" name="widgetStickersContainer" native="true"/>
+            </item>
+           </layout>
           </widget>
          </widget>
-         <widget class="QLabel" name="labelStickerSeleccionado">
+         <widget class="QLabel" name="labelStickerPreview">
           <property name="geometry">
            <rect>
-            <x>510</x>
-            <y>280</y>
-            <width>49</width>
-            <height>16</height>
+            <x>500</x>
+            <y>260</y>
+            <width>71</width>
+            <height>71</height>
            </rect>
           </property>
           <property name="text">
-           <string>TextLabel</string>
+           <string/>
+          </property>
+          <property name="scaledContents">
+           <bool>true</bool>
           </property>
          </widget>
         </widget>
