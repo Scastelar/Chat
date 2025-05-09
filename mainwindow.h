@@ -51,6 +51,23 @@ private slots:
 
     void on_pushButton_10_clicked();
 
+    void on_pushButton_13_clicked();
+
+    void on_pushButton_15_clicked();
+
+    void on_pushButton_16_clicked();
+
+    void on_btnPrevisualizar_clicked();
+
+    void on_btnDescargar_clicked();
+
+    void on_listWidgetPacks_itemDoubleClicked(QListWidgetItem *item);
+
+    void on_listWidgetPacks_itemClicked(QListWidgetItem *item);
+
+
+    void on_listWidget_2_itemClicked(QListWidgetItem *item);
+
 private:
     Ui::MainWindow *ui;
     Usuario* usuarioActual = nullptr;
@@ -62,5 +79,6 @@ private:
     void cargarStickers();
     void mostrarStickerEnChat(const QString &remitente, const QString &stickerPath, const QString &fecha);
     void guardarMensaje(const QString &archivo, const QString &remitente, const QString &mensaje, const QString &fecha);
+    void cargarPacksDisponibles();
 };
 #endif // MAINWINDOW_H

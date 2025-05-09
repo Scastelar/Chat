@@ -238,6 +238,19 @@ color: rgb(23, 23, 35);
        <string>Olvide mi contraseña :(</string>
       </property>
      </widget>
+     <widget class="QPushButton" name="pushButton_16">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>20</y>
+        <width>51</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>volver</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="page_3">
      <widget class="QLabel" name="label_6">
@@ -478,7 +491,7 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
      <widget class="QPushButton" name="pushButton_4">
       <property name="geometry">
        <rect>
-        <x>550</x>
+        <x>500</x>
         <y>330</y>
         <width>111</width>
         <height>24</height>
@@ -552,6 +565,19 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
        </property>
       </item>
      </widget>
+     <widget class="QPushButton" name="pushButton_15">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>20</y>
+        <width>51</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>volver</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="page_4">
      <widget class="QStackedWidget" name="stackedWidget_2">
@@ -600,7 +626,7 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>260</y>
+          <y>220</y>
           <width>75</width>
           <height>24</height>
          </rect>
@@ -613,7 +639,7 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>220</y>
+          <y>190</y>
           <width>75</width>
           <height>24</height>
          </rect>
@@ -667,7 +693,7 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
          <string notr="true">background-color: rgb(255, 255, 255);</string>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>3</number>
         </property>
         <widget class="QWidget" name="page_7">
          <widget class="QLabel" name="labelAvatarContacto">
@@ -687,7 +713,7 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
           <property name="geometry">
            <rect>
             <x>260</x>
-            <y>20</y>
+            <y>10</y>
             <width>171</width>
             <height>31</height>
            </rect>
@@ -868,7 +894,7 @@ selection-color: rgb(255, 170, 127);</string>
            </rect>
           </property>
           <property name="text">
-           <string>buscar</string>
+           <string>agregar</string>
           </property>
          </widget>
         </widget>
@@ -983,6 +1009,101 @@ color: rgb(255, 255, 255);</string>
           </property>
          </widget>
         </widget>
+        <widget class="QWidget" name="page_10">
+         <widget class="QLabel" name="label_22">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>0</y>
+            <width>261</width>
+            <height>41</height>
+           </rect>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font: 600 22pt &quot;Segoe UI&quot;;</string>
+          </property>
+          <property name="text">
+           <string>Descarga Stickers!</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_23">
+          <property name="geometry">
+           <rect>
+            <x>40</x>
+            <y>50</y>
+            <width>91</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>...o crea el tuyo!</string>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="pushButton_14">
+          <property name="geometry">
+           <rect>
+            <x>140</x>
+            <y>50</y>
+            <width>75</width>
+            <height>21</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>upload</string>
+          </property>
+         </widget>
+         <widget class="QScrollArea" name="scrollAreaPrevisualizacion">
+          <property name="geometry">
+           <rect>
+            <x>310</x>
+            <y>90</y>
+            <width>281</width>
+            <height>121</height>
+           </rect>
+          </property>
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents_3">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>279</width>
+             <height>119</height>
+            </rect>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <layout class="QHBoxLayout" name="layoutPrevisualizacion"/>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+         <widget class="QPushButton" name="btnDescargar">
+          <property name="geometry">
+           <rect>
+            <x>410</x>
+            <y>230</y>
+            <width>81</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Descargar</string>
+          </property>
+         </widget>
+         <widget class="QListWidget" name="listWidget_2">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>90</y>
+            <width>256</width>
+            <height>251</height>
+           </rect>
+          </property>
+         </widget>
+        </widget>
        </widget>
        <widget class="QLabel" name="chatLabel">
         <property name="geometry">
@@ -1005,13 +1126,26 @@ background-color: rgb(255, 255, 255);</string>
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>300</y>
+          <y>280</y>
           <width>75</width>
           <height>24</height>
          </rect>
         </property>
         <property name="text">
          <string>Historial</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButton_13">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>250</y>
+          <width>75</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Stickers</string>
         </property>
        </widget>
       </widget>

@@ -29,6 +29,8 @@ MainWindow::MainWindow(QWidget *parent)
         }
     }
 
+    cargarPacksDisponibles();
+
     // Conectar señales
     connect(ui->pushButtonBuscar, &QPushButton::clicked,
             this, &MainWindow::on_pushButtonBuscar_clicked);
@@ -42,20 +44,17 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->listaContactos, &QListWidget::itemClicked, [this](QListWidgetItem *item) {
         QString nombreContacto = item->data(Qt::UserRole).toString();
         mostrarChatConContacto(nombreContacto);
+
+
     });
 
     ui->labelStickerPreview->setAlignment(Qt::AlignCenter);
 
-
-
-    // Deshabilitar el botón de agregar al inicio
     ui->pushButtonAgregarContacto->setEnabled(false);
 
-    // Crear el layout de stickers (no acceder a través de ui)
     stickersLayout = new QGridLayout();
     stickersLayout->setSpacing(5);
 
-    // Asignar el layout al widget contenedor (usando el nombre correcto de tu QScrollArea)
     if (ui->scrollAreaStickers->widget()) {
         ui->scrollAreaStickers->widget()->setLayout(stickersLayout);
     }
@@ -118,7 +117,7 @@ void MainWindow::on_pushButton_3_clicked()
             QMessageBox::warning(this, "Error", "Usuario o contraseña incorrectos.");
         }
     } else {
-        QMessageBox::warning(this, "Campos vacíos", "Por favor, complete todos los campos.");
+        QMessageBox::warning(this, "Campos vacios", "Por favor, complete todos los campos.");
     }
 }
 
@@ -174,22 +173,9 @@ void MainWindow::on_pushButton_4_clicked()
             QFile borrados(userDir + "/mensajes_borrados.txt");
             borrados.open(QIODevice::WriteOnly); borrados.close();
 
-            QFile stickersFile(userDir + "/stickers.txt");
-            if (stickersFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                QTextStream out(&stickersFile);
+         }
 
-                // Agregar 3 stickers por defecto (asegúrate de que estas rutas existan)
-                out << "C:/Users/compu/Documents/Qt Projects/Chat/Chat/STKmonkey/angry.png\n";
-                out << "C:/Users/compu/Documents/Qt Projects/Chat/Chat/STKmonkey/hello.png\n";
-                out << "C:/Users/compu/Documents/Qt Projects/Chat/Chat/STKmonkey/laughing.png\n";
-                out << "C:/Users/compu/Documents/Qt Projects/Chat/Chat/STKmonkey/sad.png\n";
-                out << "C:/Users/compu/Documents/Qt Projects/Chat/Chat/STKmonkey/surprised.png\n";
-
-                stickersFile.close();
-            }
-        }
-
-        QMessageBox::information(this, "Éxito", "Cuenta creada correctamente.");
+        QMessageBox::information(this, "Exito", "Cuenta creada correctamente.");
         ui->stackedWidget->setCurrentIndex(1);
 
         // Limpiar campos
@@ -199,7 +185,7 @@ void MainWindow::on_pushButton_4_clicked()
         ui->label_13->clear();
 
     } else {
-        QMessageBox::warning(this, "Campos vacíos", "Por favor, complete todos los campos.");
+        QMessageBox::warning(this, "Campos vacios", "Por favor, complete todos los campos.");
     }
 }
 
@@ -257,7 +243,7 @@ void MainWindow::on_pushButton_11_clicked()
 void MainWindow::on_pushButtonBuscar_clicked()
 {
     QString textoBusqueda = ui->lineEditBusqueda->text().trimmed().toLower();
-    ui->listWidgetResultados->clear(); // Limpiar resultados anteriores
+    ui->listWidgetResultados->clear();
 
     if(textoBusqueda.isEmpty()) {
         QMessageBox::warning(this, "Búsqueda vacía", "Por favor ingresa un nombre de usuario");
@@ -284,7 +270,7 @@ void MainWindow::on_pushButtonBuscar_clicked()
             QLabel *avatar = new QLabel();
             QPixmap pixmap(usuario.getPerfil());
             if(pixmap.isNull()) {
-                pixmap = QPixmap(":/images/default_avatar.png");
+                pixmap = QPixmap("C:/Users/compu/Pictures/archivos/default.jpg");
             }
             avatar->setPixmap(hacerCircular(pixmap, QSize(40, 40)));
            // avatar->setPixmap(pixmap.scaled(40, 40, Qt::KeepAspectRatio));
@@ -434,7 +420,7 @@ void MainWindow::cargarContactos()
                     QLabel *avatar = new QLabel();
                     QPixmap pixmap(contacto.getPerfil());
                     if (pixmap.isNull()) {
-                        pixmap = QPixmap(":/images/default_avatar.png");
+                        pixmap = QPixmap("C:/Users/compu/Pictures/archivos/default.jpg");
                         qDebug() << "Usando avatar por defecto";
                     }
                     avatar->setPixmap(hacerCircular(pixmap, QSize(40, 40)));
@@ -507,7 +493,7 @@ void MainWindow::mostrarChatConContacto(const QString &nombreContacto)
                 QString mensaje = partes[2];
 
                 if (mensaje.startsWith("[STICKER]")) {
-                    QString rutaSticker = mensaje.mid(9); // Eliminar "[STICKER]"
+                    QString rutaSticker = mensaje.mid(9);
                     mostrarStickerEnChat(remitente, rutaSticker, fecha);
                 } else {
 
@@ -517,25 +503,25 @@ void MainWindow::mostrarChatConContacto(const QString &nombreContacto)
                 QWidget *widget = new QWidget();
                 QVBoxLayout *layout = new QVBoxLayout(widget);
 
-                QLabel *labelRemitente = new QLabel(remitente == usuarioActual->getUsername() ? "Tu" : nombreContacto);
                 QLabel *labelMensaje = new QLabel(mensaje);
+
+                QLabel *labelRemitente = new QLabel(remitente == usuarioActual->getUsername() ? "Tu" : nombreContacto);
+                labelRemitente->setStyleSheet("font-size: 9px; font-weight: bold; margin: 0;");
+
                 QLabel *labelFecha = new QLabel(fecha);
+                labelFecha->setStyleSheet("font-size: 9px; margin: 0;");
 
-                // Estilo diferente para mensajes propios y ajenos
-                if (remitente == usuarioActual->getUsername()) {
-                    widget->setStyleSheet("background-color: #FFEAEE; border-radius: 8px; padding: 3px;margin: 2px 0;");
-                    layout->setAlignment(Qt::AlignRight);
-                } else {
-                    widget->setStyleSheet("background-color: #E0F5ED; border-radius: 8px; padding: 3px;margin: 2px 0;");
-                    layout->setAlignment(Qt::AlignLeft);
-                }
-
+                layout->setAlignment(remitente == usuarioActual->getUsername() ? Qt::AlignRight : Qt::AlignLeft);
                 layout->addWidget(labelRemitente);
                 layout->addWidget(labelMensaje);
                 layout->addWidget(labelFecha);
 
+                QString estilo = remitente == usuarioActual->getUsername() ?
+                                     "background-color: #FFEAEE; border-radius: 8px; padding: 3px; margin: 2;" :
+                                     "background-color: #DCF8C6; border-radius: 8px; padding: 3px; margin: 2;";
+                widget->setStyleSheet(estilo);
+
                 widget->setLayout(layout);
-                //item->setSizeHint(widget->sizeHint());
                 item->setSizeHint(QSize(0, 110));
 
                 ui->listaMensajes->addItem(item);
@@ -567,11 +553,11 @@ void MainWindow::on_pushButton_10_clicked()
         // Mostrar en el chat
         mostrarStickerEnChat(usuarioActual->getUsername(), stickerSeleccionado, fecha);
 
-        // Limpiar selección
+        // Limpiar
         stickerSeleccionado.clear();
         ui->labelStickerPreview->clear();
     } else {
-        // Enviar mensaje de texto normal
+        // Enviar mensaje texto
         QString mensaje = ui->textEditMensaje->toPlainText().trimmed();
         if (!mensaje.isEmpty()) {
             QString nombreContacto = ui->labelNombreContacto->text();
@@ -669,18 +655,15 @@ void MainWindow::cargarStickers()
 void MainWindow::mostrarStickerEnChat(const QString &remitente, const QString &stickerPath, const QString &fecha)
 {
     QListWidgetItem *item = new QListWidgetItem(ui->listaMensajes);
-    item->setSizeHint(QSize(120, 120)); // Tamaño adecuado para stickers
+    item->setSizeHint(QSize(140, 140));
 
     QWidget *widget = new QWidget();
     QVBoxLayout *layout = new QVBoxLayout(widget);
     layout->setContentsMargins(5, 2, 5, 2);
     layout->setSpacing(2);
 
-    // Etiqueta del remitente
-    QLabel *labelRemitente = new QLabel(remitente == usuarioActual->getUsername() ? "Tú" : remitente);
-    labelRemitente->setStyleSheet("font-size: 9px; font-weight: bold; margin: 0;");
 
-    // Cargar la imagen del sticker
+    // Cargar sticker
     QLabel *labelSticker = new QLabel();
     QPixmap pixmap(stickerPath);
     if (pixmap.isNull()) {
@@ -689,21 +672,193 @@ void MainWindow::mostrarStickerEnChat(const QString &remitente, const QString &s
         labelSticker->setPixmap(pixmap.scaled(100, 100, Qt::KeepAspectRatio));
     }
 
-    // Etiqueta de fecha
-    QLabel *labelFecha = new QLabel(fecha);
-    labelFecha->setStyleSheet("font-size: 8px; color: #666; margin: 0;");
+    QLabel *labelRemitente = new QLabel(remitente == usuarioActual->getUsername() ? "Tu" : remitente);
+    labelRemitente->setStyleSheet("font-size: 9px; font-weight: bold; margin: 0;");
 
-    // Alineación según remitente
+    QLabel *labelFecha = new QLabel(fecha);
+    labelFecha->setStyleSheet("font-size: 9px; margin: 0;");
+
     layout->setAlignment(remitente == usuarioActual->getUsername() ? Qt::AlignRight : Qt::AlignLeft);
     layout->addWidget(labelRemitente);
     layout->addWidget(labelSticker);
     layout->addWidget(labelFecha);
 
-    // Estilo del widget
     QString estilo = remitente == usuarioActual->getUsername() ?
-                         "background-color: #DCF8C6; border-radius: 8px; padding: 3px;" :
-                         "background-color: #ECECEC; border-radius: 8px; padding: 3px;";
+                         "background-color: #FFEAEE; border-radius: 8px; padding: 3px; margin: 2;" :
+                         "background-color: #DCF8C6; border-radius: 8px; padding: 3px; margin: 2;";
     widget->setStyleSheet(estilo);
 
     ui->listaMensajes->setItemWidget(item, widget);
 }
+
+void MainWindow::on_pushButton_13_clicked()
+{
+    ui->stackedWidget_3->setCurrentIndex(3);
+    ui->chatLabel->setText(" ");
+}
+
+
+void MainWindow::on_pushButton_15_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(0);
+}
+
+
+void MainWindow::on_pushButton_16_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(0);
+}
+
+void MainWindow::cargarPacksDisponibles() {
+    QString ruta = "C:/Users/compu/Documents/Qt Projects/Chat/Chat/";
+    QDir dir(ruta);
+
+    if (!dir.exists()) {
+        qDebug() << "Error: El directorio no existe:" << ruta;
+        return;
+    }
+
+    qDebug() << "Contenido del directorio:" << dir.entryList();
+
+    QStringList packs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::Readable);
+
+    if (packs.isEmpty()) {
+        qDebug() << "No se encontraron carpetas en el directorio";
+        return;
+    }
+
+    for (const QString &pack : packs) {
+        qDebug() << "Carpeta encontrada:" << pack;  // Debug
+        if (pack.startsWith("STK")) {
+            ui->listWidget_2->addItem(pack);
+            qDebug() << "Pack añadido:" << pack;  // Debug
+        }
+    }
+
+    qDebug() << "Total packs añadidos:" << ui->listWidget_2->count();
+}
+
+void MainWindow::on_btnDescargar_clicked()
+{
+    QListWidgetItem *item = ui->listWidget_2->currentItem();
+    if (!item) {
+        QMessageBox::warning(this, "Error", "No hay ningún pack seleccionado");
+        return;
+    }
+
+    QString packNombre = item->text();
+    QString userPath = "usuarios/" + usuarioActual->getUsername() + "/stickers.txt";
+
+    QFile archivo(userPath);
+
+    // Verificar si el pack ya está en stickers.txt
+    if (archivo.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream in(&archivo);
+        while (!in.atEnd()) {
+            QString linea = in.readLine().trimmed();
+            if (linea.contains(packNombre)) { // Cambiado a contains para mayor flexibilidad
+                QMessageBox::information(this, "Pack existente",
+                                         "El pack '" + packNombre + "' ya está descargado");
+                archivo.close();
+                return;
+            }
+        }
+        archivo.close();
+    }
+
+    // Usar rutas relativas en lugar de absolutas
+    QDir packDir(packNombre);
+    if (!packDir.exists()) {
+        QMessageBox::warning(this, "Error", "No se encontró el directorio del pack");
+        return;
+    }
+
+    if (archivo.open(QIODevice::Append | QIODevice::Text)) {
+        QTextStream out(&archivo);
+        QStringList images = packDir.entryList(QStringList() << "*.png" << "*.jpg", QDir::Files);
+
+        if (images.isEmpty()) {
+            QMessageBox::warning(this, "Error", "El pack no contiene imágenes válidas");
+            archivo.close();
+            return;
+        }
+
+        for (const QString &image : images) {
+            out << packNombre + "/" + image << "\n"; // Guardar ruta relativa
+        }
+        archivo.close();
+
+        QMessageBox::information(this, "Éxito", "Pack '" + packNombre + "' descargado correctamente");
+    } else {
+        QMessageBox::warning(this, "Error", "No se pudo abrir el archivo para guardar los stickers");
+    }
+}
+
+
+
+void MainWindow::on_listWidget_2_itemClicked(QListWidgetItem *item)
+{
+    if (!item) {
+        qDebug() << "Error: Item es nulo";
+        return;
+    }
+
+    QString selectedPack = item->text();
+    QString packPath = "C:/Users/compu/Documents/Qt Projects/Chat/Chat/" + selectedPack;
+
+    qDebug() << "Intentando abrir directorio:" << packPath;
+
+    QDir packDir(packPath);
+    if (!packDir.exists()) {
+        qDebug() << "Error: Directorio no existe:" << packPath;
+        QMessageBox::warning(this, "Error", "Directorio no encontrado: " + packPath);
+        return;
+    }
+
+    QStringList images = packDir.entryList(QStringList() << "*.png" << "*.jpg", QDir::Files);
+    qDebug() << "Imágenes encontradas:" << images;
+
+    if (images.isEmpty()) {
+        qDebug() << "Advertencia: No hay imágenes en el directorio";
+        QMessageBox::information(this, "Info", "El pack no contiene imágenes");
+        return;
+    }
+
+    // Limpiar área previa de forma segura
+    QLayoutItem *child;
+    while ((child = ui->layoutPrevisualizacion->takeAt(0)) != nullptr) {
+        if (child->widget()) {
+            child->widget()->deleteLater();
+        }
+        delete child;
+    }
+
+    // Mostrar hasta 5 imágenes
+    int imagesToShow = qMin(5, images.size());
+    for (int i = 0; i < imagesToShow; ++i) {
+        QString imagePath = packPath + "/" + images[i];
+        qDebug() << "Cargando imagen:" << imagePath;
+
+        QPixmap pixmap(imagePath);
+        if (pixmap.isNull()) {
+            qDebug() << "Error: No se pudo cargar la imagen:" << imagePath;
+            continue;
+        }
+
+        QLabel *label = new QLabel();
+        label->setPixmap(pixmap.scaled(100, 100, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        label->setAlignment(Qt::AlignCenter);
+        label->setStyleSheet("QLabel { background-color : white;}");
+
+        ui->layoutPrevisualizacion->addWidget(label);
+        qDebug() << "Imagen agregada al layout:" << imagePath;
+    }
+
+    // Forzar actualización de la interfaz
+    ui->layoutPrevisualizacion->update();
+    qDebug() << "Actualización del layout completada";
+
+    // Verificar si el layout tiene widgets hijos
+    qDebug() << "Widgets en layout después de actualizar:" << ui->layoutPrevisualizacion->count();
+}
+
