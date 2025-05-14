@@ -104,6 +104,7 @@ void MainWindow::on_pushButton_3_clicked()
         Usuario tempUser("", "");
         if (manejo.iniciarSesion(username, password, tempUser)) {
             usuarioActual = new Usuario(tempUser);
+            usuarioActual->setEstado(1);
             ui->stackedWidget->setCurrentIndex(3);
             cargarContactos();
             QPixmap avatar(usuarioActual->getPerfil());
@@ -193,6 +194,7 @@ void MainWindow::on_pushButton_4_clicked()
 //Salir
 void MainWindow::on_pushButton_5_clicked()
 {
+    usuarioActual->setEstado(0);
     delete usuarioActual;
     usuarioActual = nullptr;
     ui->stackedWidget->setCurrentIndex(0);
@@ -427,8 +429,19 @@ void MainWindow::cargarContactos()
 
                     QLabel *nombre = new QLabel(contacto.getUsername());
 
+                    QLabel *estado = new QLabel();
+                    estado->setText("●");
+                    if(contacto.getEstado()==1){
+                        estado->setStyleSheet("QLabel { color: green; }");
+                    } else {
+                       estado->setStyleSheet("QLabel { color: gray; }");
+                    }
+
+
+
                     layout->addWidget(avatar);
                     layout->addWidget(nombre);
+                    layout->addWidget(estado);
                     layout->addStretch();
                     widget->setLayout(layout);
 
@@ -767,7 +780,7 @@ void MainWindow::on_btnDescargar_clicked()
     }
 
     // Usar rutas relativas en lugar de absolutas
-    QDir packDir(packNombre);
+    QDir packDir("C:/Users/compu/Documents/Qt Projects/Chat/Chat/" + packNombre);
     if (!packDir.exists()) {
         QMessageBox::warning(this, "Error", "No se encontró el directorio del pack");
         return;
@@ -784,11 +797,12 @@ void MainWindow::on_btnDescargar_clicked()
         }
 
         for (const QString &image : images) {
-            out << packNombre + "/" + image << "\n"; // Guardar ruta relativa
+            out << "C:/Users/compu/Documents/Qt Projects/Chat/Chat/" + packNombre + "/" + image << "\n"; // Guardar ruta relativa
         }
         archivo.close();
 
         QMessageBox::information(this, "Éxito", "Pack '" + packNombre + "' descargado correctamente");
+         cargarStickers();
     } else {
         QMessageBox::warning(this, "Error", "No se pudo abrir el archivo para guardar los stickers");
     }
