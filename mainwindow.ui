@@ -693,7 +693,7 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
          <string notr="true">background-color: rgb(255, 255, 255);</string>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>3</number>
         </property>
         <widget class="QWidget" name="page_7">
          <widget class="QLabel" name="labelAvatarContacto">
@@ -832,7 +832,7 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
            <rect>
             <x>30</x>
             <y>70</y>
-            <width>381</width>
+            <width>301</width>
             <height>22</height>
            </rect>
           </property>
@@ -840,7 +840,7 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
          <widget class="QPushButton" name="pushButtonBuscar">
           <property name="geometry">
            <rect>
-            <x>430</x>
+            <x>350</x>
             <y>70</y>
             <width>75</width>
             <height>24</height>
@@ -1058,7 +1058,7 @@ color: rgb(255, 255, 255);</string>
             <x>310</x>
             <y>90</y>
             <width>281</width>
-            <height>121</height>
+            <height>131</height>
            </rect>
           </property>
           <property name="widgetResizable">
@@ -1070,7 +1070,7 @@ color: rgb(255, 255, 255);</string>
              <x>0</x>
              <y>0</y>
              <width>279</width>
-             <height>119</height>
+             <height>129</height>
             </rect>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -1084,7 +1084,7 @@ color: rgb(255, 255, 255);</string>
           <property name="geometry">
            <rect>
             <x>410</x>
-            <y>230</y>
+            <y>240</y>
             <width>81</width>
             <height>24</height>
            </rect>
@@ -1096,10 +1096,10 @@ color: rgb(255, 255, 255);</string>
          <widget class="QListWidget" name="listWidget_2">
           <property name="geometry">
            <rect>
-            <x>20</x>
+            <x>30</x>
             <y>90</y>
             <width>256</width>
-            <height>251</height>
+            <height>171</height>
            </rect>
           </property>
          </widget>

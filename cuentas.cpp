@@ -66,8 +66,15 @@ bool Cuentas::getUsuarioPorNombre(const QString& username, Usuario& usuarioEncon
             usuarioEncontrado.setResp(parts[5]);
             usuarioEncontrado.setEdad(parts[6].toInt());
             usuarioEncontrado.setPerfil(parts[7]);
+
+            if(parts.size() >= 9) {
+                usuarioEncontrado.setEstado(parts[8].toInt());
+            } else {
+                usuarioEncontrado.setEstado(0);
+            }
+
             file.close();
-            qDebug() << "Usuario encontrado!";
+            qDebug() << "Usuario encontrado! Estado:" << usuarioEncontrado.getEstado();
             return true;
         }
     }
@@ -88,7 +95,8 @@ void Cuentas::escribirUsuario(const Usuario& usuario) {
             << usuario.getPregunta() << ";"
             << usuario.getResp() << ";"
             << usuario.getEdad() << ";"
-            << usuario.getPerfil() << "\n";
+            << usuario.getPerfil() << ";"
+            << usuario.getEstado() << "\n";
         file.close();
     } else {
         qWarning() << "Error al abrir el archivo para escritura.";
@@ -152,9 +160,6 @@ bool Cuentas::iniciarSesion(const QString& user, const QString& pass, Usuario& u
                 int edad = parts[6].toInt();
                 QString avatarPath = parts[7];
 
-                // Elimina estas líneas que están de más:
-                // in >> username >> password >> nombre >> correo >> pregunta >> respuesta >> edad >> avatarPath;
-
                 if (username == user.toLower() && password == pass.toLower()) {
                     usuarioEncontrado = Usuario(username, password);
                     usuarioEncontrado.setNombre(nombre);
@@ -176,29 +181,9 @@ bool Cuentas::iniciarSesion(const QString& user, const QString& pass, Usuario& u
 }
 
 
-/*
-void Cuentas::crearUsuario(QString nombre, QString username, QString correo, QString pregunta,
-                           int edad, QString password, QString respuesta, QString avatarPath)
-{
-    if (isUsuarioUnico(username)){
-    QFile file("cuentas.txt");
-    if (file.open(QIODevice::Append | QIODevice::Text)) {
-        QTextStream out(&file);
-        out << username.toLower() << ";"
-            << password.toLower() << ";"
-            << nombre << ";"
-            << correo << ";"
-            << pregunta << ";"
-            << respuesta << ";"
-            << edad << ";"
-            << avatarPath << "\n";
-        file.close();
-    }
-    }
-}*/
 
 void Cuentas::crearUsuario(QString nombre, QString username, QString correo, QString pregunta,
-                           int edad, QString password, QString respuesta, QString avatarPath) {
+                           int edad, QString password, QString respuesta, QString avatarPath,bool est) {
     if (isUsuarioUnico(username)) {
         Usuario nuevo(username, password);
         nuevo.setNombre(nombre);
@@ -207,6 +192,7 @@ void Cuentas::crearUsuario(QString nombre, QString username, QString correo, QSt
         nuevo.setResp(respuesta);
         nuevo.setEdad(edad);
         nuevo.setPerfil(avatarPath);
+        nuevo.setEstado(est);
         escribirUsuario(nuevo);
     }
 }
@@ -248,4 +234,65 @@ void Cuentas::eliminarUsuario(const QString& nombre) {
     } else {
         qWarning() << "Error al abrir el archivo temporal para escritura.";
     }
+}
+
+bool Cuentas::actualizarEstadoUsuario(const QString& username, bool estado)
+{
+    // Leer todo el archivo
+    QFile file(archivo);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qDebug() << "Error al abrir cuentas.txt para lectura";
+        return false;
+    }
+
+    QStringList lines;
+    QTextStream in(&file);
+    bool usuarioEncontrado = false;
+    QString usernameLower = username.toLower().trimmed();
+
+    while (!in.atEnd()) {
+        QString line = in.readLine().trimmed();
+        if(line.isEmpty()) continue;
+
+        QStringList parts = line.split(";");
+        if(parts.size() < 8) continue;
+
+        QString storedUser = parts[0].toLower().trimmed();
+
+        if (storedUser == usernameLower) {
+            // Reconstruir la línea con el nuevo estado
+            QString newLine = parts.join(";");
+            if(parts.size() >= 9) {
+                // Reemplazar el estado existente
+                newLine = parts.mid(0, 8).join(";") + ";" + QString::number(estado);
+            } else {
+                // Añadir el estado
+                newLine += ";" + QString::number(estado);
+            }
+            lines << newLine;
+            usuarioEncontrado = true;
+        } else {
+            lines << line;
+        }
+    }
+    file.close();
+
+    if(!usuarioEncontrado) {
+        qDebug() << "Usuario no encontrado para actualizar estado";
+        return false;
+    }
+
+    // Escribir todo el archivo de nuevo
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qDebug() << "Error al abrir cuentas.txt para escritura";
+        return false;
+    }
+
+    QTextStream out(&file);
+    foreach(const QString &line, lines) {
+        out << line << "\n";
+    }
+    file.close();
+
+    return true;
 }

@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QListWidgetItem>
 #include <QGridLayout>
+#include <QFileSystemWatcher>
 #include "Cuentas.h"
 
 QT_BEGIN_NAMESPACE
@@ -68,16 +69,22 @@ private slots:
 
     void on_listWidget_2_itemClicked(QListWidgetItem *item);
 
+    void onChatFileChanged(const QString &path);
+
 private:
     Ui::MainWindow *ui;
     Usuario* usuarioActual = nullptr;
     Usuario usuarioSeleccionado;
+    QFileSystemWatcher *fileWatcher;
+    QTimer *timerActualizarChat;
+    QString currentContactName;
     void cargarContactos();
     void mostrarChatConContacto(const QString &nombreContacto);
     QGridLayout *stickersLayout;
     QString stickerSeleccionado;
     void cargarStickers();
     void mostrarStickerEnChat(const QString &remitente, const QString &stickerPath, const QString &fecha);
+    void actualizarMensajes(const QString &nombreContacto);
     void guardarMensaje(const QString &archivo, const QString &remitente, const QString &mensaje, const QString &fecha);
     void cargarPacksDisponibles();
 };

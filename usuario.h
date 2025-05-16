@@ -35,10 +35,10 @@ private:
     QString nombre;
     QString username;
     QString password;
-    int edad = 0;
     QString correo;
     QString pregunta;
     QString respuesta;
+    int edad = 0;
     QString perfil;
     bool estado = 0;
 };

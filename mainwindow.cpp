@@ -8,6 +8,7 @@
 #include <QPainterPath>
 #include <QMessageBox>
 #include <QHBoxLayout>
+#include <QTimer>
 
 
 QString rutaImagen="";
@@ -32,6 +33,17 @@ MainWindow::MainWindow(QWidget *parent)
     cargarPacksDisponibles();
 
     // Conectar señales
+
+    fileWatcher = new QFileSystemWatcher(this);
+    connect(fileWatcher, &QFileSystemWatcher::fileChanged, this, &MainWindow::onChatFileChanged);
+
+    timerActualizarChat = new QTimer(this);
+    connect(timerActualizarChat, &QTimer::timeout, this, [this](){
+        if (!currentContactName.isEmpty()) {
+            mostrarChatConContacto(currentContactName);
+        }
+    });
+
     connect(ui->pushButtonBuscar, &QPushButton::clicked,
             this, &MainWindow::on_pushButtonBuscar_clicked);
 
@@ -104,13 +116,20 @@ void MainWindow::on_pushButton_3_clicked()
         Usuario tempUser("", "");
         if (manejo.iniciarSesion(username, password, tempUser)) {
             usuarioActual = new Usuario(tempUser);
-            usuarioActual->setEstado(1);
+
+            if(manejo.getUsuarioPorNombre(username, *usuarioActual)) {
+                usuarioActual->setEstado(true);
+                manejo.actualizarEstadoUsuario(username, true);
+            }
+
             ui->stackedWidget->setCurrentIndex(3);
             cargarContactos();
+
             QPixmap avatar(usuarioActual->getPerfil());
             QPixmap circularAvatar = hacerCircular(avatar, ui->perfil->size());
             ui->perfil->setPixmap(circularAvatar);
             ui->userLabel->setText(usuarioActual->getUsername());
+
             ui->listaMensajes->clear();
             ui->labelAvatarContacto->clear();
             ui->labelNombreContacto->clear();
@@ -159,7 +178,7 @@ void MainWindow::on_pushButton_4_clicked()
             return;
         }
 
-        manejo.crearUsuario(t2, t1, correoCompleto, cb, t6int, t4, t7, rutaImagen);
+        manejo.crearUsuario(t2, t1, correoCompleto, cb, t6int, t4, t7, rutaImagen,0);
         QDir dir;
         QString userDir = "usuarios/" + t1;
         if (!dir.exists("usuarios")) {
@@ -194,7 +213,7 @@ void MainWindow::on_pushButton_4_clicked()
 //Salir
 void MainWindow::on_pushButton_5_clicked()
 {
-    usuarioActual->setEstado(0);
+    manejo.actualizarEstadoUsuario(usuarioActual->getUsername(), false);
     delete usuarioActual;
     usuarioActual = nullptr;
     ui->stackedWidget->setCurrentIndex(0);
@@ -215,6 +234,7 @@ void MainWindow::on_pushButton_8_clicked()
 //Buscar contactos (cambio de pagina)
 void MainWindow::on_pushButton_6_clicked()
 {
+    timerActualizarChat->stop();
     ui->stackedWidget_3->setCurrentIndex(1);
     ui->chatLabel->setText(" ");
 
@@ -237,6 +257,7 @@ void MainWindow::on_listWidget_itemClicked(QListWidgetItem *item)
 //Historial page
 void MainWindow::on_pushButton_11_clicked()
 {
+    timerActualizarChat->stop();
     ui->stackedWidget_3->setCurrentIndex(2);
     ui->chatLabel->setText(" ");
 }
@@ -275,7 +296,6 @@ void MainWindow::on_pushButtonBuscar_clicked()
                 pixmap = QPixmap("C:/Users/compu/Pictures/archivos/default.jpg");
             }
             avatar->setPixmap(hacerCircular(pixmap, QSize(40, 40)));
-           // avatar->setPixmap(pixmap.scaled(40, 40, Qt::KeepAspectRatio));
 
 
             // Mostrar nombre de usuario
@@ -301,7 +321,7 @@ void MainWindow::on_pushButtonBuscar_clicked()
 
     if(!encontrado) {
         QListWidgetItem *item = new QListWidgetItem("No se encontraron usuarios");
-        item->setFlags(item->flags() & ~Qt::ItemIsSelectable); // Hacerlo no seleccionable
+        item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
         ui->listWidgetResultados->addItem(item);
     }
 }
@@ -432,7 +452,7 @@ void MainWindow::cargarContactos()
                     QLabel *estado = new QLabel();
                     estado->setText("●");
                     if(contacto.getEstado()==1){
-                        estado->setStyleSheet("QLabel { color: green; }");
+                        estado->setStyleSheet("QLabel { color: blue; }");
                     } else {
                        estado->setStyleSheet("QLabel { color: gray; }");
                     }
@@ -463,19 +483,8 @@ void MainWindow::cargarContactos()
     }
 }
 
-void MainWindow::guardarMensaje(const QString &archivoPath, const QString &remitente, const QString &mensaje, const QString &fecha)
-{
-    QFile archivoChat(archivoPath);
-    if (archivoChat.open(QIODevice::Append | QIODevice::Text)) {
-        QTextStream out(&archivoChat);
-        out << remitente << "|" << fecha << "|" << mensaje << "\n";
-        archivoChat.close();
-    } else {
-        qDebug() << "Error al abrir archivo de chat:" << archivoPath;
-        qDebug() << "Error:" << archivoChat.errorString();
-    }
-}
 
+/*
 void MainWindow::mostrarChatConContacto(const QString &nombreContacto)
 {
     ui->stackedWidget_3->setCurrentIndex(0);
@@ -544,6 +553,124 @@ void MainWindow::mostrarChatConContacto(const QString &nombreContacto)
         file.close();
     }
     }
+    cargarStickers();
+    qDebug() << "Stickers cargados exitosamente";
+    ui->listaMensajes->scrollToBottom();
+}
+*/
+
+void MainWindow::guardarMensaje(const QString &archivoPath, const QString &remitente, const QString &mensaje, const QString &fecha)
+{
+    QFile archivoChat(archivoPath);
+    if (archivoChat.open(QIODevice::Append | QIODevice::Text)) {
+        QTextStream out(&archivoChat);
+        out << remitente << "|" << fecha << "|" << mensaje << "\n";
+        archivoChat.close();
+    } else {
+        qDebug() << "Error al abrir archivo de chat:" << archivoPath;
+        qDebug() << "Error:" << archivoChat.errorString();
+    }
+}
+
+void MainWindow::mostrarChatConContacto(const QString &nombreContacto)
+{
+    currentContactName = nombreContacto;
+    timerActualizarChat->stop();
+    if (!fileWatcher->files().isEmpty()) {
+        fileWatcher->removePaths(fileWatcher->files());
+    }
+
+
+    ui->stackedWidget_3->setCurrentIndex(0);
+    ui->labelNombreContacto->setText(nombreContacto);
+
+    Usuario contacto;
+    if (manejo.getUsuarioPorNombre(nombreContacto, contacto)) {
+        QPixmap avatar(contacto.getPerfil());
+        QPixmap circularAvatar = hacerCircular(avatar, ui->labelAvatarContacto->size());
+        ui->labelAvatarContacto->setPixmap(circularAvatar);
+    }
+
+    QString archivoChat = "usuarios/" + usuarioActual->getUsername() + "/chat_" + nombreContacto + ".txt";
+    fileWatcher->addPath(archivoChat);
+
+    // Cargar mensajes
+    actualizarMensajes(nombreContacto);
+
+    // Iniciar el timer con intervalo de 2 segundos
+    //timerActualizarChat->start(2000);
+}
+
+void MainWindow::onChatFileChanged(const QString &path) {
+    Q_UNUSED(path);  // Opcional: para evitar advertencias si no usas el parámetro
+
+    if (!currentContactName.isEmpty()) {
+        // Actualiza el chat solo si hay un contacto seleccionado
+        actualizarMensajes(currentContactName);
+
+        // Vuelve a agregar el archivo al watcher (porque QFileSystemWatcher lo elimina tras detectar el primer cambio)
+        QString archivoChat = "usuarios/" + usuarioActual->getUsername() + "/chat_" + currentContactName + ".txt";
+        if (!fileWatcher->files().contains(archivoChat)) {
+            fileWatcher->addPath(archivoChat);
+        }
+    }
+}
+
+void MainWindow::actualizarMensajes(const QString &nombreContacto)
+{
+    QString archivoChat = "usuarios/" + usuarioActual->getUsername() + "/chat_" + nombreContacto + ".txt";
+    QFile file(archivoChat);
+
+
+    ui->listaMensajes->clear();
+
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream in(&file);
+        while (!in.atEnd()) {
+            QString linea = in.readLine();
+            QStringList partes = linea.split("|");
+
+            if (partes.size() >= 3) {
+                QString remitente = partes[0];
+                QString fecha = partes[1];
+                QString mensaje = partes[2];
+
+                if (mensaje.startsWith("[STICKER]")) {
+                    QString rutaSticker = mensaje.mid(9);
+                    mostrarStickerEnChat(remitente, rutaSticker, fecha);
+                } else {
+                    QListWidgetItem *item = new QListWidgetItem();
+                    QWidget *widget = new QWidget();
+                    QVBoxLayout *layout = new QVBoxLayout(widget);
+
+                    QLabel *labelMensaje = new QLabel(mensaje);
+                    QLabel *labelRemitente = new QLabel(remitente == usuarioActual->getUsername() ? "Tu" : nombreContacto);
+                    labelRemitente->setStyleSheet("font-size: 9px; font-weight: bold; margin: 0;");
+
+                    QLabel *labelFecha = new QLabel(fecha);
+                    labelFecha->setStyleSheet("font-size: 9px; margin: 0;");
+
+                    layout->setAlignment(remitente == usuarioActual->getUsername() ? Qt::AlignRight : Qt::AlignLeft);
+                    layout->addWidget(labelRemitente);
+                    layout->addWidget(labelMensaje);
+                    layout->addWidget(labelFecha);
+
+                    QString estilo = remitente == usuarioActual->getUsername() ?
+                                         "background-color: #FFEAEE; border-radius: 8px; padding: 3px; margin: 2;" :
+                                         "background-color: #DCF8C6; border-radius: 8px; padding: 3px; margin: 2;";
+                    widget->setStyleSheet(estilo);
+
+                    widget->setLayout(layout);
+                    item->setSizeHint(QSize(0, 110));
+
+                    ui->listaMensajes->addItem(item);
+                    ui->listaMensajes->setItemWidget(item, widget);
+                }
+            }
+        }
+        file.close();
+    }
+
     cargarStickers();
     qDebug() << "Stickers cargados exitosamente";
     ui->listaMensajes->scrollToBottom();
