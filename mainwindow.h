@@ -71,6 +71,10 @@ private slots:
 
     void onChatFileChanged(const QString &path);
 
+    void on_listaContactos_itemDoubleClicked(QListWidgetItem *item);
+
+    void on_listaMensajes_itemDoubleClicked(QListWidgetItem *item);
+
 private:
     Ui::MainWindow *ui;
     Usuario* usuarioActual = nullptr;
@@ -87,5 +91,8 @@ private:
     void actualizarMensajes(const QString &nombreContacto);
     void guardarMensaje(const QString &archivo, const QString &remitente, const QString &mensaje, const QString &fecha);
     void cargarPacksDisponibles();
+    void guardarMensajeBorrado(const QString &remitente, const QString &mensaje, const QString &fecha);
+    void eliminarMensajeDelChat(const QString &contacto, const QString &mensajeCompleto);
+    void eliminarMensajeDeArchivo(const QString &archivo, const QString &mensajeCompleto);
 };
 #endif // MAINWINDOW_H

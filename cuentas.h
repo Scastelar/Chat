@@ -21,9 +21,10 @@ public:
     bool iniciarSesion(const QString& user, const QString& pass, Usuario& usuarioEncontrado);
     void crearUsuario(QString nombre, QString username, QString correo, QString pregunta,
                       int edad, QString password, QString respuesta, QString avatarPath, bool est);
-    void eliminarUsuario(const QString& nombre);
+    void eliminarContacto(const QString& nombre, const QString& archivo);
     void leerUsuarios(QVector<Usuario>& usuarios);
    bool getUsuarioPorNombre(const QString& username, Usuario& usuarioEncontrado);
+    void leerContactos(QVector<QString>& contactos);
     bool actualizarEstadoUsuario(const QString& username, bool estado);
 };
 

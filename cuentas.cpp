@@ -120,9 +120,6 @@ void Cuentas::leerUsuarios(QVector<Usuario>& usuarios) {
                 int edad = parts[6].toInt();
                 QString avatarPath = parts[7];
 
-                // Elimina estas líneas que están de más:
-                // in >> username >> password >> nombre >> correo >> pregunta >> respuesta >> edad >> avatarPath;
-
                 if (!username.isEmpty() && !password.isEmpty()) {
                     Usuario u(username.toLower(), password.toLower());
                     u.setNombre(nombre);
@@ -133,8 +130,6 @@ void Cuentas::leerUsuarios(QVector<Usuario>& usuarios) {
                     u.setPerfil(avatarPath);
                     usuarios.append(u);
                 }
-                // Elimina esta línea que está de más:
-                // in.readLine(); // Para evitar saltos incorrectos de línea
             }
         }
         file.close();
@@ -142,6 +137,22 @@ void Cuentas::leerUsuarios(QVector<Usuario>& usuarios) {
         qWarning() << "Error al abrir el archivo para lectura.";
     }
 }
+void Cuentas::leerContactos(QVector<QString>& contactos) {
+    QFile file(archivo);
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream in(&file);
+        while (!in.atEnd()) {
+            QString username = in.readLine().trimmed();
+            if (!username.isEmpty()) {
+                contactos.append(username);
+            }
+        }
+        file.close();
+    } else {
+        qWarning() << "Error al abrir el archivo para lectura:" << archivo;
+    }
+}
+
 
 bool Cuentas::iniciarSesion(const QString& user, const QString& pass, Usuario& usuarioEncontrado) {
     QFile file(archivo);  // Usa archivo en lugar de "cuentas.txt" directamente
@@ -198,9 +209,9 @@ void Cuentas::crearUsuario(QString nombre, QString username, QString correo, QSt
 }
 
 
-void Cuentas::eliminarUsuario(const QString& nombre) {
-    QVector<Usuario> usuarios;
-    leerUsuarios(usuarios);
+void Cuentas::eliminarContacto(const QString& nombre, const QString& archivo) {
+    QVector<QString> usuarios;
+    leerContactos(usuarios);
 
     QFile temp("temp.txt");
     bool encontrado = false;
@@ -209,15 +220,8 @@ void Cuentas::eliminarUsuario(const QString& nombre) {
     if (temp.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QTextStream out(&temp);
         for (const auto& usuario : usuarios) {
-            if (usuario.getUsername().toLower() != lowerNombre) {
-                out << usuario.getUsername() << ";"
-                    << usuario.getPassword() << ";"
-                    << usuario.getNombre() << ";"
-                    << usuario.getCorreo() << ";"
-                    << usuario.getPregunta() << ";"
-                    << usuario.getResp() << ";"
-                    << usuario.getEdad() << ";"
-                    << usuario.getPerfil() << "\n";
+            if (usuario.toLower() != lowerNombre) {
+                out << usuario << "\n";
             } else {
                 encontrado = true;
             }

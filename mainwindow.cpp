@@ -484,80 +484,7 @@ void MainWindow::cargarContactos()
 }
 
 
-/*
-void MainWindow::mostrarChatConContacto(const QString &nombreContacto)
-{
-    ui->stackedWidget_3->setCurrentIndex(0);
-    ui->labelNombreContacto->setText(nombreContacto);
 
-    Usuario contacto;
-    if (manejo.getUsuarioPorNombre(nombreContacto, contacto)) {
-        QPixmap avatar(contacto.getPerfil());
-        QPixmap circularAvatar = hacerCircular(avatar, ui->labelAvatarContacto->size());
-        ui->labelAvatarContacto->setPixmap(circularAvatar);
-    }
-
-    // Cargar mensajes
-    QString archivoChat = "usuarios/" + usuarioActual->getUsername() + "/chat_" + nombreContacto + ".txt";
-    QFile file(archivoChat);
-
-    ui->listaMensajes->clear();
-
-    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QTextStream in(&file);
-        while (!in.atEnd()) {
-            QString linea = in.readLine();
-            QStringList partes = linea.split("|");
-
-            if (partes.size() >= 3) {
-                QString remitente = partes[0];
-                QString fecha = partes[1];
-                QString mensaje = partes[2];
-
-                if (mensaje.startsWith("[STICKER]")) {
-                    QString rutaSticker = mensaje.mid(9);
-                    mostrarStickerEnChat(remitente, rutaSticker, fecha);
-                } else {
-
-                QListWidgetItem *item = new QListWidgetItem();
-
-                // Crear widget personalizado para el mensaje
-                QWidget *widget = new QWidget();
-                QVBoxLayout *layout = new QVBoxLayout(widget);
-
-                QLabel *labelMensaje = new QLabel(mensaje);
-
-                QLabel *labelRemitente = new QLabel(remitente == usuarioActual->getUsername() ? "Tu" : nombreContacto);
-                labelRemitente->setStyleSheet("font-size: 9px; font-weight: bold; margin: 0;");
-
-                QLabel *labelFecha = new QLabel(fecha);
-                labelFecha->setStyleSheet("font-size: 9px; margin: 0;");
-
-                layout->setAlignment(remitente == usuarioActual->getUsername() ? Qt::AlignRight : Qt::AlignLeft);
-                layout->addWidget(labelRemitente);
-                layout->addWidget(labelMensaje);
-                layout->addWidget(labelFecha);
-
-                QString estilo = remitente == usuarioActual->getUsername() ?
-                                     "background-color: #FFEAEE; border-radius: 8px; padding: 3px; margin: 2;" :
-                                     "background-color: #DCF8C6; border-radius: 8px; padding: 3px; margin: 2;";
-                widget->setStyleSheet(estilo);
-
-                widget->setLayout(layout);
-                item->setSizeHint(QSize(0, 110));
-
-                ui->listaMensajes->addItem(item);
-                ui->listaMensajes->setItemWidget(item, widget);
-            }
-        }
-        file.close();
-    }
-    }
-    cargarStickers();
-    qDebug() << "Stickers cargados exitosamente";
-    ui->listaMensajes->scrollToBottom();
-}
-*/
 
 void MainWindow::guardarMensaje(const QString &archivoPath, const QString &remitente, const QString &mensaje, const QString &fecha)
 {
@@ -597,18 +524,14 @@ void MainWindow::mostrarChatConContacto(const QString &nombreContacto)
     // Cargar mensajes
     actualizarMensajes(nombreContacto);
 
-    // Iniciar el timer con intervalo de 2 segundos
-    //timerActualizarChat->start(2000);
 }
 
 void MainWindow::onChatFileChanged(const QString &path) {
     Q_UNUSED(path);  // Opcional: para evitar advertencias si no usas el parámetro
 
     if (!currentContactName.isEmpty()) {
-        // Actualiza el chat solo si hay un contacto seleccionado
         actualizarMensajes(currentContactName);
 
-        // Vuelve a agregar el archivo al watcher (porque QFileSystemWatcher lo elimina tras detectar el primer cambio)
         QString archivoChat = "usuarios/" + usuarioActual->getUsername() + "/chat_" + currentContactName + ".txt";
         if (!fileWatcher->files().contains(archivoChat)) {
             fileWatcher->addPath(archivoChat);
@@ -663,6 +586,7 @@ void MainWindow::actualizarMensajes(const QString &nombreContacto)
                     widget->setLayout(layout);
                     item->setSizeHint(QSize(0, 110));
 
+                    item->setData(Qt::UserRole, linea);
                     ui->listaMensajes->addItem(item);
                     ui->listaMensajes->setItemWidget(item, widget);
                 }
@@ -1002,4 +926,117 @@ void MainWindow::on_listWidget_2_itemClicked(QListWidgetItem *item)
     // Verificar si el layout tiene widgets hijos
     qDebug() << "Widgets en layout después de actualizar:" << ui->layoutPrevisualizacion->count();
 }
+
+
+void MainWindow::on_listaContactos_itemDoubleClicked(QListWidgetItem *item)
+{
+
+    QString contactoAEliminar = ui->listaContactos->currentItem()->text();
+
+    // Mostrar mensaje de confirmación
+    QMessageBox::StandardButton respuesta;
+    respuesta = QMessageBox::question(this, "Confirmar eliminación",
+                                      "¿Estás seguro que deseas eliminar a " + contactoAEliminar + "?",
+                                      QMessageBox::Yes | QMessageBox::No);
+
+    if (respuesta == QMessageBox::Yes) {
+        QString file("usuarios/" + usuarioActual->getUsername() + "/contactos.txt");
+            manejo.eliminarContacto(contactoAEliminar,file);
+            QFile::remove("usuarios/" + usuarioActual->getUsername() + "/chat_" + contactoAEliminar + ".txt");
+            QMessageBox::information(this, "Éxito", "Contacto eliminado correctamente");
+            cargarContactos();
+            ui->listaMensajes->clear();
+            ui->labelNombreContacto->setText(" ");
+            ui->labelAvatarContacto->setText(" ");
+        } else {
+            QMessageBox::warning(this, "Error", "No se pudo eliminar el contacto");
+        }
+    }
+
+void MainWindow::guardarMensajeBorrado(const QString &remitente, const QString &mensaje, const QString &fecha) {
+    QString archivoBorrados = "usuarios/" + usuarioActual->getUsername() + "/mensajes_borrados.txt";
+    guardarMensaje(archivoBorrados, remitente, mensaje, fecha);
+}
+
+void MainWindow::eliminarMensajeDelChat(const QString &contacto, const QString &mensajeCompleto) {
+    // Archivo del usuario actual
+    QString archivoChat1 = "usuarios/" + usuarioActual->getUsername() + "/chat_" + contacto + ".txt";
+    // Archivo del contacto
+    QString archivoChat2 = "usuarios/" + contacto + "/chat_" + usuarioActual->getUsername() + ".txt";
+
+    // Eliminar de ambos archivos
+    eliminarMensajeDeArchivo(archivoChat1, mensajeCompleto);
+    eliminarMensajeDeArchivo(archivoChat2, mensajeCompleto);
+    }
+
+
+    void MainWindow::eliminarMensajeDeArchivo(const QString &archivo, const QString &mensajeCompleto) {
+        if (!QFile::exists(archivo)) return;
+
+        QString archivoTemp = archivo + ".tmp";
+
+        QFile fileIn(archivo);
+        QFile fileOut(archivoTemp);
+
+        if (fileIn.open(QIODevice::ReadOnly | QIODevice::Text) &&
+            fileOut.open(QIODevice::WriteOnly | QIODevice::Text)) {
+
+            QTextStream in(&fileIn);
+            QTextStream out(&fileOut);
+
+            while (!in.atEnd()) {
+                QString line = in.readLine();
+                if (line != mensajeCompleto) {
+                    out << line << "\n";
+                }
+            }
+
+            fileIn.close();
+            fileOut.close();
+
+            // Reemplazar archivo original
+            QFile::remove(archivo);
+            QFile::rename(archivoTemp, archivo);
+        }
+    }
+
+void MainWindow::on_listaMensajes_itemDoubleClicked(QListWidgetItem *item)
+{
+    QString mensajeCompleto = item->data(Qt::UserRole).toString();
+    QStringList parts = mensajeCompleto.split("|");
+
+    if (parts.size() < 3) return;
+
+    QString remitente = parts[0];
+    QString fecha = parts[1];
+    QString mensaje = parts[2];
+
+    // Verificar si el mensaje es del usuario actual
+    if (remitente != usuarioActual->getUsername()) {
+        QMessageBox::information(this, "Borrar mensaje",
+                                 "Solo puedes borrar tus propios mensajes");
+        return;
+    }
+
+    // Preguntar confirmación
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this, "Borrar mensaje",
+                                  "¿Estás seguro de querer borrar este mensaje?\n"
+                                  "Se eliminará de ambas conversaciones",
+                                  QMessageBox::Yes | QMessageBox::No);
+
+    if (reply == QMessageBox::Yes) {
+        // 1. Guardar en mensajes_borrados.txt
+        guardarMensajeBorrado(remitente, mensaje, fecha);
+
+        // 2. Eliminar de ambos chats
+        eliminarMensajeDelChat(currentContactName, mensajeCompleto);
+
+        // 3. Actualizar la vista
+        actualizarMensajes(currentContactName);
+}
+}
+
+
+
 
