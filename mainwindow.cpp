@@ -8,11 +8,10 @@
 #include <QPainterPath>
 #include <QMessageBox>
 #include <QHBoxLayout>
-#include <QTimer>
-
 
 QString rutaImagen="";
 Cuentas manejo("cuentas.txt");
+ QString archivoMensajesBorrados;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -30,6 +29,9 @@ MainWindow::MainWindow(QWidget *parent)
         }
     }
 
+    PilaGenerica<QString> pilaMensajesBorrados;
+    //const QString archivoMensajesBorrados;
+
     cargarPacksDisponibles();
 
     // Conectar señales
@@ -37,12 +39,9 @@ MainWindow::MainWindow(QWidget *parent)
     fileWatcher = new QFileSystemWatcher(this);
     connect(fileWatcher, &QFileSystemWatcher::fileChanged, this, &MainWindow::onChatFileChanged);
 
-    timerActualizarChat = new QTimer(this);
-    connect(timerActualizarChat, &QTimer::timeout, this, [this](){
-        if (!currentContactName.isEmpty()) {
-            mostrarChatConContacto(currentContactName);
-        }
-    });
+    watcherContactos = new QFileSystemWatcher(this);
+    connect(watcherContactos, &QFileSystemWatcher::fileChanged,
+            this, &MainWindow::onContactosFileChanged);
 
     connect(ui->pushButtonBuscar, &QPushButton::clicked,
             this, &MainWindow::on_pushButtonBuscar_clicked);
@@ -129,6 +128,12 @@ void MainWindow::on_pushButton_3_clicked()
             QPixmap circularAvatar = hacerCircular(avatar, ui->perfil->size());
             ui->perfil->setPixmap(circularAvatar);
             ui->userLabel->setText(usuarioActual->getUsername());
+
+
+             archivoMensajesBorrados = "usuarios/" + usuarioActual->getUsername() + "/mensajes_borrados.txt";
+
+            void cargarPilaMensajesBorrados();
+            void guardarPilaMensajesBorrados();
 
             ui->listaMensajes->clear();
             ui->labelAvatarContacto->clear();
@@ -217,6 +222,7 @@ void MainWindow::on_pushButton_5_clicked()
     delete usuarioActual;
     usuarioActual = nullptr;
     ui->stackedWidget->setCurrentIndex(0);
+    ui->labelStickerPreview->setText(" ");
 }
 
 //Seleccionar avatar
@@ -234,7 +240,6 @@ void MainWindow::on_pushButton_8_clicked()
 //Buscar contactos (cambio de pagina)
 void MainWindow::on_pushButton_6_clicked()
 {
-    timerActualizarChat->stop();
     ui->stackedWidget_3->setCurrentIndex(1);
     ui->chatLabel->setText(" ");
 
@@ -257,7 +262,6 @@ void MainWindow::on_listWidget_itemClicked(QListWidgetItem *item)
 //Historial page
 void MainWindow::on_pushButton_11_clicked()
 {
-    timerActualizarChat->stop();
     ui->stackedWidget_3->setCurrentIndex(2);
     ui->chatLabel->setText(" ");
 }
@@ -412,6 +416,10 @@ void MainWindow::cargarContactos()
 
     QFile archivoContactos(rutaContactos);
 
+    if (!watcherContactos->files().contains(rutaContactos)) {
+        watcherContactos->addPath(rutaContactos);
+    }
+
     if (!archivoContactos.exists()) {
         qDebug() << "El archivo de contactos no existe. Creando uno nuevo...";
         if (archivoContactos.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -502,7 +510,6 @@ void MainWindow::guardarMensaje(const QString &archivoPath, const QString &remit
 void MainWindow::mostrarChatConContacto(const QString &nombreContacto)
 {
     currentContactName = nombreContacto;
-    timerActualizarChat->stop();
     if (!fileWatcher->files().isEmpty()) {
         fileWatcher->removePaths(fileWatcher->files());
     }
@@ -535,8 +542,22 @@ void MainWindow::onChatFileChanged(const QString &path) {
         QString archivoChat = "usuarios/" + usuarioActual->getUsername() + "/chat_" + currentContactName + ".txt";
         if (!fileWatcher->files().contains(archivoChat)) {
             fileWatcher->addPath(archivoChat);
+
         }
     }
+}
+
+void MainWindow::onContactosFileChanged(const QString &path) {
+    Q_UNUSED(path);
+    qDebug() << "Archivo de contactos modificado. Actualizando lista...";
+
+    // Forzar recarga del archivo (Qt a veces elimina el watch después de notificar)
+    QString contactosPath = "usuarios/" + usuarioActual->getUsername() + "/contactos.txt";
+    if (!watcherContactos->files().contains(contactosPath)) {
+        watcherContactos->addPath(contactosPath);
+    }
+
+    cargarContactos();  // Vuelve a cargar la lista desde el archivo
 }
 
 void MainWindow::actualizarMensajes(const QString &nombreContacto)
@@ -793,7 +814,7 @@ void MainWindow::cargarPacksDisponibles() {
 
     for (const QString &pack : packs) {
         qDebug() << "Carpeta encontrada:" << pack;  // Debug
-        if (pack.startsWith("STK")) {
+        if (pack.startsWith("♡")) {
             ui->listWidget_2->addItem(pack);
             qDebug() << "Pack añadido:" << pack;  // Debug
         }
@@ -931,7 +952,14 @@ void MainWindow::on_listWidget_2_itemClicked(QListWidgetItem *item)
 void MainWindow::on_listaContactos_itemDoubleClicked(QListWidgetItem *item)
 {
 
-    QString contactoAEliminar = ui->listaContactos->currentItem()->text();
+    QString contactoAEliminar = item->data(Qt::UserRole).toString();
+    QString archivoContactos = "usuarios/" + usuarioActual->getUsername() + "/contactos.txt";
+
+    // Asegurar que el watcher esté activo
+    if (!watcherContactos->files().contains(archivoContactos)) {
+        watcherContactos->addPath(archivoContactos);
+    }
+
 
     // Mostrar mensaje de confirmación
     QMessageBox::StandardButton respuesta;
@@ -941,17 +969,20 @@ void MainWindow::on_listaContactos_itemDoubleClicked(QListWidgetItem *item)
 
     if (respuesta == QMessageBox::Yes) {
         QString file("usuarios/" + usuarioActual->getUsername() + "/contactos.txt");
-            manejo.eliminarContacto(contactoAEliminar,file);
-            QFile::remove("usuarios/" + usuarioActual->getUsername() + "/chat_" + contactoAEliminar + ".txt");
-            QMessageBox::information(this, "Éxito", "Contacto eliminado correctamente");
-            cargarContactos();
-            ui->listaMensajes->clear();
-            ui->labelNombreContacto->setText(" ");
-            ui->labelAvatarContacto->setText(" ");
-        } else {
-            QMessageBox::warning(this, "Error", "No se pudo eliminar el contacto");
-        }
+        QString file2("usuarios/" + contactoAEliminar + "/contactos.txt");
+        manejo.eliminarContacto(contactoAEliminar,file);
+        manejo.eliminarContacto(usuarioActual->getUsername(),file2);
+        QFile::remove("usuarios/" + usuarioActual->getUsername() + "/chat_" + contactoAEliminar + ".txt");
+        QFile::remove("usuarios/" + contactoAEliminar + "/chat_" + usuarioActual->getUsername() + ".txt");
+        QMessageBox::information(this, "Éxito", "Contacto eliminado correctamente");
+        cargarContactos();
+        ui->listaMensajes->clear();
+        ui->labelNombreContacto->setText(" ");
+        ui->labelAvatarContacto->setText(" ");
+    } else {
+        QMessageBox::warning(this, "Error", "No se pudo eliminar el contacto");
     }
+}
 
 void MainWindow::guardarMensajeBorrado(const QString &remitente, const QString &mensaje, const QString &fecha) {
     QString archivoBorrados = "usuarios/" + usuarioActual->getUsername() + "/mensajes_borrados.txt";
@@ -1026,6 +1057,11 @@ void MainWindow::on_listaMensajes_itemDoubleClicked(QListWidgetItem *item)
                                   QMessageBox::Yes | QMessageBox::No);
 
     if (reply == QMessageBox::Yes) {
+        // Guardar en la pila y archivo
+        QString datosMensaje = mensajeCompleto + "|" + currentContactName;
+        pilaMensajesBorrados.insertar(datosMensaje);
+        guardarPilaMensajesBorrados();
+
         // 1. Guardar en mensajes_borrados.txt
         guardarMensajeBorrado(remitente, mensaje, fecha);
 
@@ -1034,9 +1070,136 @@ void MainWindow::on_listaMensajes_itemDoubleClicked(QListWidgetItem *item)
 
         // 3. Actualizar la vista
         actualizarMensajes(currentContactName);
+
+        ui->btnDeshacerBorrado->setEnabled(true);
 }
 }
 
+void MainWindow::cargarPilaMensajesBorrados() {
+    try {
+        pilaMensajesBorrados.cargarDesdeArchivo(archivoMensajesBorrados.toStdString());
+        ui->btnDeshacerBorrado->setEnabled(!pilaMensajesBorrados.pilaVacia());
+    } catch (const std::exception& e) {
+        qWarning() << "Error al cargar mensajes borrados:" << e.what();
+    }
+}
+
+void MainWindow::guardarPilaMensajesBorrados() {
+    try {
+        pilaMensajesBorrados.guardarEnArchivo(archivoMensajesBorrados.toStdString());
+    } catch (const std::exception& e) {
+        qWarning() << "Error al guardar mensajes borrados:" << e.what();
+    }
+}
 
 
 
+void MainWindow::on_pushButton_17_clicked()
+{
+    ui->stackedWidget_3->setCurrentIndex(4);
+    ui->chatLabel->setText(" ");
+}
+
+
+void MainWindow::on_btnDeshacerBorrado_clicked() {
+    try {
+        if (pilaMensajesBorrados.pilaVacia()) return;
+
+        QString datos = pilaMensajesBorrados.quitar();
+        QStringList partes = datos.split("|");
+
+        if (partes.size() < 4) return;
+
+        QString remitente = partes[0];
+        QString fecha = partes[1];
+        QString mensaje = partes[2];
+        QString contacto = partes[3];
+
+        QString mensajeCompleto = remitente + "|" + fecha + "|" + mensaje;
+
+        // Cambia esta línea:
+        restaurarMensajeEnChats(contacto, mensajeCompleto, fecha);
+
+        if (currentContactName == contacto) {
+            actualizarMensajes(currentContactName);
+        }
+
+        guardarPilaMensajesBorrados();
+        ui->btnDeshacerBorrado->setEnabled(!pilaMensajesBorrados.pilaVacia());
+    } catch (...) {
+        QMessageBox::warning(this, "Error", "No se pudo restaurar el mensaje");
+    }
+}
+void MainWindow::restaurarMensajeEnChats(const QString &contacto, const QString &mensajeCompleto, const QString &fechaOriginal) {
+    QString archivoUsuario = "usuarios/" + usuarioActual->getUsername() + "/chat_" + contacto + ".txt";
+    QString archivoContacto = "usuarios/" + contacto + "/chat_" + usuarioActual->getUsername() + ".txt";
+
+    // Restaurar en ambos archivos manteniendo el orden cronológico
+    insertarMensajeEnPosicion(archivoUsuario, mensajeCompleto, fechaOriginal);
+    insertarMensajeEnPosicion(archivoContacto, mensajeCompleto, fechaOriginal);
+}
+void MainWindow::agregarMensajeAArchivo(const QString &archivo, const QString &mensajeCompleto) {
+    QFile file(archivo);
+    if (file.open(QIODevice::Append | QIODevice::Text)) {
+        QTextStream out(&file);
+        out << mensajeCompleto << "\n";
+        file.close();
+    }
+}
+
+void MainWindow::insertarMensajeEnPosicion(const QString &archivoChat, const QString &mensajeCompleto, const QString &fechaOriginal) {
+    if (!QFile::exists(archivoChat)) {
+        // Si el archivo no existe, simplemente lo creamos con el mensaje
+        QFile file(archivoChat);
+        if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream out(&file);
+            out << mensajeCompleto << "\n";
+            file.close();
+        }
+        return;
+    }
+
+    // Leer todo el contenido del archivo
+    QFile file(archivoChat);
+    QStringList lineas;
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream in(&file);
+        while (!in.atEnd()) {
+            lineas << in.readLine();
+        }
+        file.close();
+    }
+
+    // Buscar la posición correcta basada en la fecha
+    bool insertado = false;
+    QString fechaNuevoMensaje = fechaOriginal; // Formato: "yyyy-MM-dd hh:mm:ss"
+
+    for (int i = 0; i < lineas.size(); ++i) {
+        QString linea = lineas[i];
+        QStringList partes = linea.split("|");
+        if (partes.size() >= 2) {
+            QString fechaExistente = partes[1].trimmed();
+
+            // Comparar fechas (asegúrate de que estén en formato ordenable)
+            if (fechaNuevoMensaje < fechaExistente) {
+                lineas.insert(i, mensajeCompleto);
+                insertado = true;
+                break;
+            }
+        }
+    }
+
+    // Si no se insertó antes, agregar al final
+    if (!insertado) {
+        lineas << mensajeCompleto;
+    }
+
+    // Escribir de vuelta al archivo
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream out(&file);
+        for (const QString &linea : lineas) {
+            out << linea << "\n";
+        }
+        file.close();
+    }
+}

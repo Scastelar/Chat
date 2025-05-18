@@ -210,33 +210,44 @@ void Cuentas::crearUsuario(QString nombre, QString username, QString correo, QSt
 
 
 void Cuentas::eliminarContacto(const QString& nombre, const QString& archivo) {
-    QVector<QString> usuarios;
-    leerContactos(usuarios);
+    // 1. Leer TODOS los contactos actuales
+    QVector<QString> contactos;
+    QFile file(archivo);
 
-    QFile temp("temp.txt");
-    bool encontrado = false;
-    QString lowerNombre = nombre.toLower();
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream in(&file);
+        while (!in.atEnd()) {
+            QString contacto = in.readLine().trimmed();
+            if (!contacto.isEmpty()) {
+                contactos.append(contacto);
+            }
+        }
+        file.close();
+    }
 
-    if (temp.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QTextStream out(&temp);
-        for (const auto& usuario : usuarios) {
-            if (usuario.toLower() != lowerNombre) {
-                out << usuario << "\n";
+    // 2. Volver a abrir el archivo para escritura (esto lo SOBREESCRIBE)
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream out(&file);
+        bool encontrado = false;
+
+        // 3. Escribir solo los contactos que NO coinciden
+        for (const QString& contacto : contactos) {
+            if (contacto.toLower() != nombre.toLower()) {
+                out << contacto << "\n";
             } else {
                 encontrado = true;
             }
         }
-        temp.close();
-        QFile::remove(archivo);
-        QFile::rename("temp.txt", archivo);
+
+        file.close();
 
         if (encontrado) {
-            qDebug() << "Usuario eliminado con éxito.";
+            qDebug() << "Contacto eliminado:" << nombre;
         } else {
-            qDebug() << "Usuario no encontrado.";
+            qDebug() << "Contacto no encontrado:" << nombre;
         }
     } else {
-        qWarning() << "Error al abrir el archivo temporal para escritura.";
+        qWarning() << "Error al abrir archivo para escritura:" << archivo;
     }
 }
 

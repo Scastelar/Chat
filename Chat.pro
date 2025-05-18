@@ -15,6 +15,9 @@ SOURCES += \
     usuario.cpp
 
 HEADERS += \
+    ../../../New folder/PilaGenerica.h \
+    ../../../New folder/PilaGenerica.h \
+    PilaGenerica.h \
     cuentas.h \
     mainwindow.h \
     usuario.h

@@ -737,7 +737,7 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
            <rect>
             <x>490</x>
             <y>330</y>
-            <width>91</width>
+            <width>101</width>
             <height>31</height>
            </rect>
           </property>
@@ -761,7 +761,7 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
             <x>0</x>
             <y>10</y>
             <width>151</width>
-            <height>371</height>
+            <height>311</height>
            </rect>
           </property>
          </widget>
@@ -823,6 +823,22 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
           </property>
           <property name="scaledContents">
            <bool>true</bool>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="btnDeshacerBorrado">
+          <property name="geometry">
+           <rect>
+            <x>110</x>
+            <y>330</y>
+            <width>41</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font: 16pt &quot;Segoe UI&quot;;</string>
+          </property>
+          <property name="text">
+           <string>←</string>
           </property>
          </widget>
         </widget>
@@ -920,20 +936,20 @@ selection-color: rgb(255, 170, 127);</string>
            <rect>
             <x>40</x>
             <y>80</y>
-            <width>111</width>
+            <width>131</width>
             <height>16</height>
            </rect>
           </property>
           <property name="text">
-           <string>Mensajes Borrados</string>
+           <string>Seleccione un contacto</string>
           </property>
          </widget>
          <widget class="QLineEdit" name="lineEdit_2">
           <property name="geometry">
            <rect>
-            <x>300</x>
+            <x>370</x>
             <y>80</y>
-            <width>141</width>
+            <width>161</width>
             <height>22</height>
            </rect>
           </property>
@@ -941,9 +957,9 @@ selection-color: rgb(255, 170, 127);</string>
          <widget class="QPushButton" name="pushButton_12">
           <property name="geometry">
            <rect>
-            <x>460</x>
+            <x>540</x>
             <y>80</y>
-            <width>101</width>
+            <width>51</width>
             <height>24</height>
            </rect>
           </property>
@@ -952,7 +968,7 @@ selection-color: rgb(255, 170, 127);</string>
 color: rgb(255, 255, 255);</string>
           </property>
           <property name="text">
-           <string>Buscar Mensaje</string>
+           <string>Buscar </string>
           </property>
          </widget>
          <widget class="QScrollArea" name="scrollArea_2">
@@ -985,16 +1001,6 @@ color: rgb(255, 255, 255);</string>
               <height>211</height>
              </rect>
             </property>
-            <item>
-             <property name="text">
-              <string>New Item</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>New Item</string>
-             </property>
-            </item>
            </widget>
           </widget>
          </widget>
@@ -1007,6 +1013,31 @@ color: rgb(255, 255, 255);</string>
             <height>201</height>
            </rect>
           </property>
+         </widget>
+         <widget class="QComboBox" name="comboBox_2">
+          <property name="geometry">
+           <rect>
+            <x>291</x>
+            <y>80</y>
+            <width>71</width>
+            <height>22</height>
+           </rect>
+          </property>
+          <item>
+           <property name="text">
+            <string>A-Z</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>longitud</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>fecha</string>
+           </property>
+          </item>
          </widget>
         </widget>
         <widget class="QWidget" name="page_10">
@@ -1104,6 +1135,47 @@ color: rgb(255, 255, 255);</string>
           </property>
          </widget>
         </widget>
+        <widget class="QWidget" name="page_11">
+         <widget class="QLabel" name="label_24">
+          <property name="geometry">
+           <rect>
+            <x>30</x>
+            <y>10</y>
+            <width>261</width>
+            <height>41</height>
+           </rect>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font: 600 22pt &quot;Segoe UI&quot;;</string>
+          </property>
+          <property name="text">
+           <string>Notificaciones</string>
+          </property>
+         </widget>
+         <widget class="QListWidget" name="listWidget_3">
+          <property name="geometry">
+           <rect>
+            <x>30</x>
+            <y>90</y>
+            <width>461</width>
+            <height>251</height>
+           </rect>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="pushButton_18">
+          <property name="geometry">
+           <rect>
+            <x>510</x>
+            <y>320</y>
+            <width>75</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>limpiar</string>
+          </property>
+         </widget>
+        </widget>
        </widget>
        <widget class="QLabel" name="chatLabel">
         <property name="geometry">
@@ -1146,6 +1218,32 @@ background-color: rgb(255, 255, 255);</string>
         </property>
         <property name="text">
          <string>Stickers</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButton_17">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>160</y>
+          <width>71</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Notis</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_25">
+        <property name="geometry">
+         <rect>
+          <x>100</x>
+          <y>160</y>
+          <width>16</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>●</string>
         </property>
        </widget>
       </widget>

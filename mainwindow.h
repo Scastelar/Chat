@@ -6,6 +6,7 @@
 #include <QGridLayout>
 #include <QFileSystemWatcher>
 #include "Cuentas.h"
+#include "PilaGenerica.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -71,17 +72,24 @@ private slots:
 
     void onChatFileChanged(const QString &path);
 
+    void onContactosFileChanged(const QString &path);
+
     void on_listaContactos_itemDoubleClicked(QListWidgetItem *item);
 
     void on_listaMensajes_itemDoubleClicked(QListWidgetItem *item);
+
+    void on_pushButton_17_clicked();
+
+    void on_btnDeshacerBorrado_clicked();
 
 private:
     Ui::MainWindow *ui;
     Usuario* usuarioActual = nullptr;
     Usuario usuarioSeleccionado;
     QFileSystemWatcher *fileWatcher;
-    QTimer *timerActualizarChat;
+    QFileSystemWatcher *watcherContactos;
     QString currentContactName;
+    PilaGenerica<QString> pilaMensajesBorrados;
     void cargarContactos();
     void mostrarChatConContacto(const QString &nombreContacto);
     QGridLayout *stickersLayout;
@@ -91,8 +99,13 @@ private:
     void actualizarMensajes(const QString &nombreContacto);
     void guardarMensaje(const QString &archivo, const QString &remitente, const QString &mensaje, const QString &fecha);
     void cargarPacksDisponibles();
+    void cargarPilaMensajesBorrados();
+    void guardarPilaMensajesBorrados();
     void guardarMensajeBorrado(const QString &remitente, const QString &mensaje, const QString &fecha);
     void eliminarMensajeDelChat(const QString &contacto, const QString &mensajeCompleto);
     void eliminarMensajeDeArchivo(const QString &archivo, const QString &mensajeCompleto);
+    void restaurarMensajeEnChats(const QString &contacto, const QString &mensajeCompleto, const QString &fechaOriginal);
+    void agregarMensajeAArchivo(const QString &archivo, const QString &mensajeCompleto) ;
+    void insertarMensajeEnPosicion(const QString &archivoChat, const QString &mensajeCompleto, const QString &fechaOriginal);
 };
 #endif // MAINWINDOW_H
