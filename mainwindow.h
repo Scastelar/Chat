@@ -92,6 +92,8 @@ private slots:
 
     void on_pushButton_12_clicked();
 
+    void on_comboBox_2_currentIndexChanged(int index);
+
 private:
     Ui::MainWindow *ui;
     Usuario* usuarioActual = nullptr;
@@ -135,7 +137,7 @@ private:
     void cargarColasDeContactos();
     void guardarColasDeContactos();
     void actualizarIndicadoresMensajes();
-
+    QStringList obtenerMensajesFiltrados();
 
 };
 #endif // MAINWINDOW_H

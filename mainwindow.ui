@@ -1017,25 +1017,30 @@ color: rgb(255, 255, 255);</string>
          <widget class="QComboBox" name="comboBox_2">
           <property name="geometry">
            <rect>
-            <x>291</x>
+            <x>281</x>
             <y>80</y>
-            <width>71</width>
+            <width>81</width>
             <height>22</height>
            </rect>
           </property>
           <item>
            <property name="text">
-            <string>A-Z</string>
+            <string>Longitud ↑</string>
            </property>
           </item>
           <item>
            <property name="text">
-            <string>longitud</string>
+            <string>Longitud ↓</string>
            </property>
           </item>
           <item>
            <property name="text">
-            <string>fecha</string>
+            <string>Fecha ↑</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Fecha ↓</string>
            </property>
           </item>
          </widget>

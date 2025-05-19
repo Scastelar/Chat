@@ -7,7 +7,8 @@
 #include <QPainterPath>
 #include <QMessageBox>
 #include <QHBoxLayout>
-
+#include <QTextBlock>    // Para QTextBlock
+#include <QTextDocument>
 QString rutaImagen="";
 Cuentas manejo("cuentas.txt");
  QString archivoMensajesBorrados;
@@ -150,6 +151,7 @@ void MainWindow::on_pushButton_3_clicked()
             ui->listaMensajes->clear();
             ui->labelAvatarContacto->clear();
             ui->labelNombreContacto->clear();
+            ui->textBrowser->clear();
         } else {
             QMessageBox::warning(this, "Error", "Usuario o contraseña incorrectos.");
         }
@@ -267,12 +269,7 @@ void MainWindow::on_pushButton_7_clicked()
     ui->chatLabel->setText("Chats");
 }
 
-/*
-//Cargar contactos, buscar mensaje
-void MainWindow::on_listWidget_itemClicked(QListWidgetItem *item)
-{
-    QString nombreContacto = item->data(Qt::UserRole).toString();
-}*/
+
 
 //Historial page
 void MainWindow::on_pushButton_11_clicked()
@@ -301,10 +298,9 @@ void MainWindow::on_pushButtonBuscar_clicked()
     for(const Usuario &usuario : todosUsuarios) {
         QString username = usuario.getUsername().toLower();
         if(username.contains(textoBusqueda) && username != miUsuario) {
-            // Agregar a la lista de resultados
             QListWidgetItem *item = new QListWidgetItem(ui->listWidgetResultados);
 
-            // Crear un widget personalizado para mostrar el usuario
+            // Crear un widget para mostrar el usuario
             QWidget *widget = new QWidget();
             QHBoxLayout *layout = new QHBoxLayout(widget);
 
@@ -316,8 +312,6 @@ void MainWindow::on_pushButtonBuscar_clicked()
             }
             avatar->setPixmap(hacerCircular(pixmap, QSize(40, 40)));
 
-
-            // Mostrar nombre de usuario
             QLabel *nombre = new QLabel(usuario.getUsername());
 
             layout->addWidget(avatar);
@@ -329,7 +323,6 @@ void MainWindow::on_pushButtonBuscar_clicked()
             item->setSizeHint(widget->sizeHint());
             ui->listWidgetResultados->setItemWidget(item, widget);
 
-            // Guardar el objeto Usuario como dato del item
             QVariant data;
             data.setValue(usuario);
             item->setData(Qt::UserRole, data);
@@ -348,7 +341,6 @@ void MainWindow::on_pushButtonBuscar_clicked()
 // Cuando se selecciona un usuario de la lista
 void MainWindow::on_listWidgetResultados_itemClicked(QListWidgetItem *item)
 {
-    // Obtener el usuario guardado en los datos del item
     QVariant data = item->data(Qt::UserRole);
     if(data.canConvert<Usuario>()) {
         usuarioSeleccionado = data.value<Usuario>();
@@ -408,14 +400,8 @@ void MainWindow::on_pushButtonAgregarContacto_clicked()
             out << miUsuario << "\n";
             archivoSolicitudes.close();
 
-            // Mostrar notificación en la interfaz del otro usuario (si estuviera conectado)
-            // Esto requeriría un sistema de notificaciones en tiempo real
-
             QMessageBox::information(this, "Solicitud enviada",
                                      "Se ha enviado una solicitud de contacto a " + nombreContacto);
-
-            // Opcional: Actualizar la lista de notificaciones si estás viendo el perfil del usuario
-            // actualizarNotificaciones();
         } else {
             QMessageBox::critical(this, "Error",
                                   "No se pudo enviar la solicitud de contacto");
@@ -462,7 +448,6 @@ void MainWindow::cargarContactos()
                     qDebug() << "Mostrando contacto:" << contacto.getUsername();
 
                     // Crear item personalizado
-
                     QListWidgetItem *item = new QListWidgetItem();
                     QWidget *widget = new QWidget();
                     QHBoxLayout *layout = new QHBoxLayout(widget);
@@ -560,12 +545,10 @@ void MainWindow::agregarNotifsALista(Usuario contacto, QListWidget* lista) {
     QPushButton *btnAceptar = new QPushButton("Aceptar");
     QPushButton *btnDeclinar = new QPushButton("Declinar");
 
-    // Estilo opcional para los botones
     btnAceptar->setStyleSheet("QPushButton { background-color: #4CAF50; color: white; border: none; padding: 5px 10px; }");
     btnDeclinar->setStyleSheet("QPushButton { background-color: #f44336; color: white; border: none; padding: 5px 10px; }");
 
 
-    // Conectar señales de los botones (necesitarás implementar estos slots)
     connect(btnAceptar, &QPushButton::clicked, this, [this, contacto]() {
         manejarSolicitudAceptada(contacto.getUsername());
     });
@@ -591,8 +574,7 @@ void MainWindow::agregarNotifsALista(Usuario contacto, QListWidget* lista) {
 
 
 void MainWindow::cargarNotificaciones() {
-    // Limpiar la lista de notificaciones primero
-    ui->listNotifs->clear(); // Asume que tienes un QListWidget llamado listaNotificaciones
+    ui->listNotifs->clear();
 
     QString rutaSolicitudes = "usuarios/" + usuarioActual->getUsername() + "/solicitudes.txt";
     qDebug() << "Cargando solicitudes de:" << rutaSolicitudes;
@@ -623,7 +605,6 @@ void MainWindow::cargarNotificaciones() {
             if (!nombreSolicitante.isEmpty()) {
                 Usuario solicitante;
                 if (manejo.getUsuarioPorNombre(nombreSolicitante, solicitante)) {
-                    // Usar la función que ya tenemos para mostrar la notificación
                     agregarNotifsALista(solicitante, ui->listNotifs);
                 } else {
                     qDebug() << "Usuario solicitante no encontrado:" << nombreSolicitante;
@@ -803,15 +784,19 @@ void MainWindow::actualizarMensaje(const QString &nombreContacto, const QString 
     }
     file.close();
 
-    // Mostrar mensajes en el QTextBrowser
     ui->textBrowser->clear();
     for (const QString &msg : mensajes) {
-        ui->textBrowser->append(msg);
+        QString mensajeResaltado = msg;
+        mensajeResaltado.replace(filtro, "<b>" + filtro + "</b>", Qt::CaseInsensitive);
+        ui->textBrowser->append(mensajeResaltado);
     }
 }
+
+
 //Enviar mensaje
 void MainWindow::on_pushButton_10_clicked()
 {
+    // Enviar sticker
     if (!stickerSeleccionado.isEmpty()) {
         QString nombreContacto = ui->labelNombreContacto->text();
         QString fecha = QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm");
@@ -822,10 +807,8 @@ void MainWindow::on_pushButton_10_clicked()
         guardarMensaje("usuarios/" + nombreContacto + "/chat_" + usuarioActual->getUsername() + ".txt",
                        usuarioActual->getUsername(), "[STICKER]" + stickerSeleccionado, fecha);
 
-        // Mostrar en el chat
         mostrarStickerEnChat(usuarioActual->getUsername(), stickerSeleccionado, fecha);
 
-        // Limpiar
         stickerSeleccionado.clear();
         ui->labelStickerPreview->clear();
     } else {
@@ -841,11 +824,7 @@ void MainWindow::on_pushButton_10_clicked()
             guardarMensaje("usuarios/" + nombreContacto + "/chat_" + usuarioActual->getUsername() + ".txt",
                            usuarioActual->getUsername(), mensaje, fecha);
 
-            // Mostrar en el chat
-            //mostrarMensajeEnChat(usuarioActual->getUsername(), mensaje, fecha, nombreContacto);
             mostrarChatConContacto(nombreContacto);
-
-            // Limpiar campo de texto
             ui->textEditMensaje->clear();
         }
     }
@@ -1038,7 +1017,6 @@ void MainWindow::on_btnDescargar_clicked()
         archivo.close();
     }
 
-    // Usar rutas relativas en lugar de absolutas
     QDir packDir("C:/Users/compu/Documents/Qt Projects/Chat/Chat/" + packNombre);
     if (!packDir.exists()) {
         QMessageBox::warning(this, "Error", "No se encontró el directorio del pack");
@@ -1096,8 +1074,6 @@ void MainWindow::on_listWidget_2_itemClicked(QListWidgetItem *item)
         QMessageBox::information(this, "Info", "El pack no contiene imágenes");
         return;
     }
-
-    // Limpiar área previa de forma segura
     QLayoutItem *child;
     while ((child = ui->layoutPrevisualizacion->takeAt(0)) != nullptr) {
         if (child->widget()) {
@@ -1106,7 +1082,6 @@ void MainWindow::on_listWidget_2_itemClicked(QListWidgetItem *item)
         delete child;
     }
 
-    // Mostrar hasta 5 imágenes
     int imagesToShow = qMin(5, images.size());
     for (int i = 0; i < imagesToShow; ++i) {
         QString imagePath = packPath + "/" + images[i];
@@ -1127,11 +1102,9 @@ void MainWindow::on_listWidget_2_itemClicked(QListWidgetItem *item)
         qDebug() << "Imagen agregada al layout:" << imagePath;
     }
 
-    // Forzar actualización de la interfaz
     ui->layoutPrevisualizacion->update();
     qDebug() << "Actualización del layout completada";
 
-    // Verificar si el layout tiene widgets hijos
     qDebug() << "Widgets en layout después de actualizar:" << ui->layoutPrevisualizacion->count();
 }
 
@@ -1142,13 +1115,10 @@ void MainWindow::on_listaContactos_itemDoubleClicked(QListWidgetItem *item)
     QString contactoAEliminar = item->data(Qt::UserRole).toString();
     QString archivoContactos = "usuarios/" + usuarioActual->getUsername() + "/contactos.txt";
 
-    // Asegurar que el watcher esté activo
     if (!watcherContactos->files().contains(archivoContactos)) {
         watcherContactos->addPath(archivoContactos);
     }
 
-
-    // Mostrar mensaje de confirmación
     QMessageBox::StandardButton respuesta;
     respuesta = QMessageBox::question(this, "Confirmar eliminación",
                                       "¿Estás seguro que deseas eliminar a " + contactoAEliminar + "?",
@@ -1212,7 +1182,6 @@ void MainWindow::eliminarMensajeDelChat(const QString &contacto, const QString &
             fileIn.close();
             fileOut.close();
 
-            // Reemplazar archivo original
             QFile::remove(archivo);
             QFile::rename(archivoTemp, archivo);
         }
@@ -1249,17 +1218,15 @@ void MainWindow::on_listaMensajes_itemDoubleClicked(QListWidgetItem *item)
         pilaMensajesBorrados.insertar(datosMensaje);
         guardarPilaMensajesBorrados();
 
-        // 1. Guardar en mensajes_borrados.txt
+        // Guardar en mensajes_borrados.txt
         guardarMensajeBorrado(remitente, mensaje, fecha);
 
-        // 2. Eliminar de ambos chats
+        // Eliminar de ambos chats
         eliminarMensajeDelChat(currentContactName, mensajeCompleto);
 
-        // 3. Actualizar la vista
         actualizarMensajes(currentContactName);
-
         ui->btnDeshacerBorrado->setEnabled(true);
-}
+    }
 }
 
 void MainWindow::cargarPilaMensajesBorrados() {
@@ -1301,6 +1268,53 @@ void MainWindow::on_pushButton_17_clicked()
         file.resize(0);
         file.write(content.toUtf8());
         file.close();
+    }
+}
+
+void shellSortByLength(QStringList &mensajes, bool ascendente) {
+    int n = mensajes.size();
+    for (int gap = n / 2; gap > 0; gap /= 2) {
+        for (int i = gap; i < n; i++) {
+            QString temp = mensajes[i];
+            int j;
+            for (j = i; j >= gap; j -= gap) {
+                bool condition = ascendente ?
+                                     (mensajes[j - gap].length() > temp.length()) :
+                                     (mensajes[j - gap].length() < temp.length());
+                if (condition) {
+                    mensajes[j] = mensajes[j - gap];
+                } else {
+                    break;
+                }
+            }
+            mensajes[j] = temp;
+        }
+    }
+}
+
+void insertionSortByDate(QStringList &mensajes, bool ascendente) {
+    int n = mensajes.size();
+    for (int i = 1; i < n; i++) {
+        QString temp = mensajes[i];
+        int j = i - 1;
+
+        // Extraer fecha del mensaje actual y anterior
+        QString fechaTemp = temp.mid(1, 5);
+        QString fechaJ = mensajes[j].mid(1, 5);
+
+        while (j >= 0) {
+            bool condition = ascendente ?
+                                 (fechaJ > fechaTemp) :
+                                 (fechaJ < fechaTemp);
+            if (condition) {
+                mensajes[j + 1] = mensajes[j];
+                j--;
+                if (j >= 0) fechaJ = mensajes[j].mid(1, 5);
+            } else {
+                break;
+            }
+        }
+        mensajes[j + 1] = temp;
     }
 }
 
@@ -1496,12 +1510,52 @@ void MainWindow::eliminarLineaDeArchivo(const QString &rutaArchivo, const QStrin
 
 void MainWindow::on_pushButton_12_clicked()
 {
+    if (!ui->listWidget->currentItem()) {
+        return;
+    }
     QString nombreContacto = ui->listWidget->currentItem()->data(Qt::UserRole).toString();
     QString palabraClave = ui->lineEdit_2->text().trimmed();
     if (nombreContacto.isEmpty()) {
-        return;  // No hay contacto seleccionado
+        return;
     }
     actualizarMensaje(nombreContacto, palabraClave);  // Filtra mensajes
     ui->lineEdit_2->clear();
 }
 
+
+void MainWindow::on_comboBox_2_currentIndexChanged(int index)
+{
+    if (currentContactName.isEmpty()) return;
+
+    QStringList mensajes = obtenerMensajesFiltrados();  // Obtiene mensajes ya filtrados (sin stickers)
+
+    switch (index) {
+    case 0:  // Longitud ascendente
+        shellSortByLength(mensajes, true);
+        break;
+    case 1:  // Longitud descendente
+        shellSortByLength(mensajes, false);
+        break;
+    case 2:  // Fecha ascendente
+        insertionSortByDate(mensajes, true);
+        break;
+    case 3:  // Fecha descendente
+        insertionSortByDate(mensajes, false);
+        break;
+    }
+
+    // Mostrar resultados
+    ui->textBrowser->clear();
+    for (const QString &msg : mensajes) {
+        ui->textBrowser->append(msg);
+    }
+}
+
+QStringList MainWindow::obtenerMensajesFiltrados() {
+    QStringList mensajes;
+    QTextDocument *doc = ui->textBrowser->document();
+    for (int i = 0; i < doc->blockCount(); i++) {
+        mensajes << doc->findBlockByNumber(i).text();
+    }
+    return mensajes;
+}
