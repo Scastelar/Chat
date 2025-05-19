@@ -693,7 +693,7 @@ font: 600 24pt &quot;Segoe UI&quot;;</string>
          <string notr="true">background-color: rgb(255, 255, 255);</string>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>2</number>
         </property>
         <widget class="QWidget" name="page_7">
          <widget class="QLabel" name="labelAvatarContacto">
@@ -1152,7 +1152,7 @@ color: rgb(255, 255, 255);</string>
            <string>Notificaciones</string>
           </property>
          </widget>
-         <widget class="QListWidget" name="listWidget_3">
+         <widget class="QListWidget" name="listNotifs">
           <property name="geometry">
            <rect>
             <x>30</x>
@@ -1162,17 +1162,29 @@ color: rgb(255, 255, 255);</string>
            </rect>
           </property>
          </widget>
-         <widget class="QPushButton" name="pushButton_18">
+        </widget>
+        <widget class="QWidget" name="page_12">
+         <widget class="QPushButton" name="btnPrevisualizar">
           <property name="geometry">
            <rect>
-            <x>510</x>
-            <y>320</y>
+            <x>200</x>
+            <y>120</y>
             <width>75</width>
             <height>24</height>
            </rect>
           </property>
           <property name="text">
-           <string>limpiar</string>
+           <string>PushButton</string>
+          </property>
+         </widget>
+         <widget class="QListWidget" name="listWidgetPacks">
+          <property name="geometry">
+           <rect>
+            <x>130</x>
+            <y>160</y>
+            <width>256</width>
+            <height>192</height>
+           </rect>
           </property>
          </widget>
         </widget>
@@ -1230,14 +1242,14 @@ background-color: rgb(255, 255, 255);</string>
          </rect>
         </property>
         <property name="text">
-         <string>Notis</string>
+         <string>Buzon</string>
         </property>
        </widget>
        <widget class="QLabel" name="label_25">
         <property name="geometry">
          <rect>
-          <x>100</x>
-          <y>160</y>
+          <x>90</x>
+          <y>150</y>
           <width>16</width>
           <height>16</height>
          </rect>

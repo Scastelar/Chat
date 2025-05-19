@@ -7,6 +7,7 @@
 #include <QFileSystemWatcher>
 #include "Cuentas.h"
 #include "PilaGenerica.h"
+#include "Cola.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -74,6 +75,8 @@ private slots:
 
     void onContactosFileChanged(const QString &path);
 
+    void onNotifsFileChanged(const QString &path);
+
     void on_listaContactos_itemDoubleClicked(QListWidgetItem *item);
 
     void on_listaMensajes_itemDoubleClicked(QListWidgetItem *item);
@@ -82,21 +85,35 @@ private slots:
 
     void on_btnDeshacerBorrado_clicked();
 
+    void actualizarNotificaciones();
+
+
+    void on_listWidget_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
+
+    void on_pushButton_12_clicked();
+
 private:
     Ui::MainWindow *ui;
     Usuario* usuarioActual = nullptr;
     Usuario usuarioSeleccionado;
     QFileSystemWatcher *fileWatcher;
     QFileSystemWatcher *watcherContactos;
+    QFileSystemWatcher *notifsWatcher;
     QString currentContactName;
     PilaGenerica<QString> pilaMensajesBorrados;
-    void cargarContactos();
-    void mostrarChatConContacto(const QString &nombreContacto);
     QGridLayout *stickersLayout;
     QString stickerSeleccionado;
+    QMap<QString, Cola> mensajesNoLeidos; // clave: nombreContacto, valor: cola de mensajes
+    QMap<QString, int> contadoresMensajes;
+
+    void cargarContactos();
+    void agregarNotifsALista(Usuario contacto, QListWidget* lista);
+    void cargarNotificaciones();
+    void mostrarChatConContacto(const QString &nombreContacto);
     void cargarStickers();
     void mostrarStickerEnChat(const QString &remitente, const QString &stickerPath, const QString &fecha);
     void actualizarMensajes(const QString &nombreContacto);
+    void actualizarMensaje(const QString &nombreContacto, const QString &filtro = "");
     void guardarMensaje(const QString &archivo, const QString &remitente, const QString &mensaje, const QString &fecha);
     void cargarPacksDisponibles();
     void cargarPilaMensajesBorrados();
@@ -107,5 +124,18 @@ private:
     void restaurarMensajeEnChats(const QString &contacto, const QString &mensajeCompleto, const QString &fechaOriginal);
     void agregarMensajeAArchivo(const QString &archivo, const QString &mensajeCompleto) ;
     void insertarMensajeEnPosicion(const QString &archivoChat, const QString &mensajeCompleto, const QString &fechaOriginal);
+    QWidget* crearWidgetNotificacion(const QString& usuario, const QString& perfil);
+    void marcarNotificacionAtendida(const QString& usuario);
+    int contarNotificacionesPendientes() const;
+    void agregarContacto(const QString& usuario);
+    void marcarNotificacionLeida(const QString& usuario);
+    void manejarSolicitudAceptada(const QString &nombreContacto);
+    void manejarSolicitudDeclinada(const QString &nombreContacto);
+    void eliminarLineaDeArchivo(const QString &rutaArchivo, const QString &lineaAEliminar);
+    void cargarColasDeContactos();
+    void guardarColasDeContactos();
+    void actualizarIndicadoresMensajes();
+
+
 };
 #endif // MAINWINDOW_H

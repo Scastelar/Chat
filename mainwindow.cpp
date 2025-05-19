@@ -1,7 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-
 #include <QFileDialog>
 #include <QPixmap>
 #include <QPainter>
@@ -12,6 +11,7 @@
 QString rutaImagen="";
 Cuentas manejo("cuentas.txt");
  QString archivoMensajesBorrados;
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -29,6 +29,8 @@ MainWindow::MainWindow(QWidget *parent)
         }
     }
 
+
+
     PilaGenerica<QString> pilaMensajesBorrados;
     //const QString archivoMensajesBorrados;
 
@@ -40,8 +42,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(fileWatcher, &QFileSystemWatcher::fileChanged, this, &MainWindow::onChatFileChanged);
 
     watcherContactos = new QFileSystemWatcher(this);
-    connect(watcherContactos, &QFileSystemWatcher::fileChanged,
-            this, &MainWindow::onContactosFileChanged);
+    connect(watcherContactos, &QFileSystemWatcher::fileChanged,this, &MainWindow::onContactosFileChanged);
+
+    notifsWatcher = new QFileSystemWatcher(this);
+    connect(notifsWatcher, &QFileSystemWatcher::fileChanged, this, &MainWindow::onNotifsFileChanged);
 
     connect(ui->pushButtonBuscar, &QPushButton::clicked,
             this, &MainWindow::on_pushButtonBuscar_clicked);
@@ -55,8 +59,14 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->listaContactos, &QListWidget::itemClicked, [this](QListWidgetItem *item) {
         QString nombreContacto = item->data(Qt::UserRole).toString();
         mostrarChatConContacto(nombreContacto);
+    });
 
 
+
+    connect(ui->lineEdit_2, &QLineEdit::textChanged, this, [this](const QString &text) {
+        if (text.isEmpty() && !currentContactName.isEmpty()) {
+            actualizarMensajes(currentContactName);  // Mostrar todos los mensajes
+        }
     });
 
     ui->labelStickerPreview->setAlignment(Qt::AlignCenter);
@@ -134,7 +144,9 @@ void MainWindow::on_pushButton_3_clicked()
 
             void cargarPilaMensajesBorrados();
             void guardarPilaMensajesBorrados();
+            cargarNotificaciones();
 
+            ui->pushButton_10->setEnabled(false);
             ui->listaMensajes->clear();
             ui->labelAvatarContacto->clear();
             ui->labelNombreContacto->clear();
@@ -198,6 +210,9 @@ void MainWindow::on_pushButton_4_clicked()
             QFile borrados(userDir + "/mensajes_borrados.txt");
             borrados.open(QIODevice::WriteOnly); borrados.close();
 
+            QFile notifs(userDir + "/notifs.txt");
+            contactos.open(QIODevice::WriteOnly); contactos.close();
+
          }
 
         QMessageBox::information(this, "Exito", "Cuenta creada correctamente.");
@@ -253,10 +268,10 @@ void MainWindow::on_pushButton_7_clicked()
 }
 
 /*
-//Recuperar mensaje borrado
+//Cargar contactos, buscar mensaje
 void MainWindow::on_listWidget_itemClicked(QListWidgetItem *item)
 {
-
+    QString nombreContacto = item->data(Qt::UserRole).toString();
 }*/
 
 //Historial page
@@ -365,42 +380,45 @@ void MainWindow::on_pushButtonAgregarContacto_clicked()
             archivoContactos.close();
         }
 
-        QFile file1("usuarios/" + miUsuario + "/contactos.txt");
-        QFile file2("usuarios/" + nombreContacto + "/contactos.txt");
+        // Verificar si ya hay una solicitud pendiente
+        QString rutaSolicitudes = "usuarios/" + nombreContacto + "/solicitudes.txt";
+        QFile archivoSolicitudes(rutaSolicitudes);
+        bool solicitudExistente = false;
 
-        // Agregar a contactos
-        if(file1.open(QIODevice::Append | QIODevice::Text) &&
-            file2.open(QIODevice::Append | QIODevice::Text)) {
-
-            QTextStream out1(&file1);
-            QTextStream out2(&file2);
-
-            out1 << nombreContacto << "\n";
-            out2 << miUsuario << "\n";
-
-            file1.close();
-            file2.close();
-
-            // Crear archivos de chat
-            QString chat1 = "usuarios/" + miUsuario + "/chat_" + nombreContacto + ".txt";
-            QString chat2 = "usuarios/" + nombreContacto + "/chat_" + miUsuario + ".txt";
-
-            QFile file1(chat1);
-            if(file1.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                file1.close();
+        if(archivoSolicitudes.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            QTextStream in(&archivoSolicitudes);
+            while(!in.atEnd()) {
+                if(in.readLine().trimmed() == miUsuario) {
+                    solicitudExistente = true;
+                    break;
+                }
             }
+            archivoSolicitudes.close();
+        }
 
-            QFile file2(chat2);
-            if(file2.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                file2.close();
-            }
+        if(solicitudExistente) {
+            QMessageBox::information(this, "Solicitud existente",
+                                     "Ya has enviado una solicitud a este usuario");
+            return;
+        }
 
-            QMessageBox::information(this, "Contacto agregado",
-                                     nombreContacto + " ha sido agregado a tus contactos");
-            cargarContactos();
+        // Agregar solicitud al archivo del otro usuario
+        if(archivoSolicitudes.open(QIODevice::Append | QIODevice::Text)) {
+            QTextStream out(&archivoSolicitudes);
+            out << miUsuario << "\n";
+            archivoSolicitudes.close();
+
+            // Mostrar notificación en la interfaz del otro usuario (si estuviera conectado)
+            // Esto requeriría un sistema de notificaciones en tiempo real
+
+            QMessageBox::information(this, "Solicitud enviada",
+                                     "Se ha enviado una solicitud de contacto a " + nombreContacto);
+
+            // Opcional: Actualizar la lista de notificaciones si estás viendo el perfil del usuario
+            // actualizarNotificaciones();
         } else {
             QMessageBox::critical(this, "Error",
-                                  "No se pudo abrir el archivo de contactos");
+                                  "No se pudo enviar la solicitud de contacto");
         }
     }
 }
@@ -410,6 +428,8 @@ void MainWindow::cargarContactos()
     qDebug() << "=== Cargando contactos para:" << usuarioActual->getUsername() << "===";
 
     ui->listaContactos->clear();
+    ui->listWidget->clear();
+
 
     QString rutaContactos = "usuarios/" + usuarioActual->getUsername() + "/contactos.txt";
     qDebug() << "Buscando contactos en:" << rutaContactos;
@@ -442,9 +462,12 @@ void MainWindow::cargarContactos()
                     qDebug() << "Mostrando contacto:" << contacto.getUsername();
 
                     // Crear item personalizado
+
                     QListWidgetItem *item = new QListWidgetItem();
                     QWidget *widget = new QWidget();
                     QHBoxLayout *layout = new QHBoxLayout(widget);
+
+
 
                     // Avatar circular
                     QLabel *avatar = new QLabel();
@@ -462,10 +485,8 @@ void MainWindow::cargarContactos()
                     if(contacto.getEstado()==1){
                         estado->setStyleSheet("QLabel { color: blue; }");
                     } else {
-                       estado->setStyleSheet("QLabel { color: gray; }");
+                        estado->setStyleSheet("QLabel { color: gray; }");
                     }
-
-
 
                     layout->addWidget(avatar);
                     layout->addWidget(nombre);
@@ -476,9 +497,36 @@ void MainWindow::cargarContactos()
                     item->setSizeHint(widget->sizeHint());
                     ui->listaContactos->addItem(item);
                     ui->listaContactos->setItemWidget(item, widget);
+                    item->setData(Qt::UserRole, contacto.getUsername());
 
-                    // Guardar nombre para usar al hacer clic
-                    item->setData(Qt::UserRole, nombreContacto);
+                    QListWidgetItem *item2 = new QListWidgetItem();
+                    QWidget *widget2 = new QWidget();
+                    QHBoxLayout *layout2 = new QHBoxLayout(widget);
+
+                    // Avatar circular
+                    QLabel *avatar2 = new QLabel();
+                    QPixmap pix(contacto.getPerfil());
+                    if (pix.isNull()) {
+                        pix = QPixmap("C:/Users/compu/Pictures/archivos/default.jpg");
+                        qDebug() << "Usando avatar por defecto";
+                    }
+                    avatar2->setPixmap(hacerCircular(pix, QSize(40, 40)));
+
+                    QLabel *nombre2 = new QLabel(contacto.getUsername());
+
+
+
+                    layout2->addWidget(avatar2);
+                    layout2->addWidget(nombre2);
+                    layout2->addStretch();
+                    widget2->setLayout(layout2);
+
+                    item2->setSizeHint(widget2->sizeHint());
+                    ui->listWidget->addItem(item2);
+                    ui->listWidget->setItemWidget(item2, widget2);
+                    item2->setData(Qt::UserRole, contacto.getUsername());
+
+
                 } else {
                     qDebug() << "Contacto no encontrado en cuentas.txt:" << nombreContacto;
                 }
@@ -491,8 +539,103 @@ void MainWindow::cargarContactos()
     }
 }
 
+void MainWindow::agregarNotifsALista(Usuario contacto, QListWidget* lista) {
+    QListWidgetItem *item = new QListWidgetItem();
+    QWidget *widget = new QWidget();
+    QHBoxLayout *layout = new QHBoxLayout(widget);
+
+    // Avatar circular
+    QLabel *avatar = new QLabel();
+    QPixmap pixmap(contacto.getPerfil());
+    if (pixmap.isNull()) {
+        pixmap = QPixmap("C:/Users/compu/Pictures/archivos/default.jpg");
+        qDebug() << "Usando avatar por defecto";
+    }
+    avatar->setPixmap(hacerCircular(pixmap, QSize(40, 40)));
+
+    QLabel *nombre = new QLabel(contacto.getUsername());
+    QLabel *mensaje = new QLabel("te envió una solicitud!");
+
+    // Crear botones
+    QPushButton *btnAceptar = new QPushButton("Aceptar");
+    QPushButton *btnDeclinar = new QPushButton("Declinar");
+
+    // Estilo opcional para los botones
+    btnAceptar->setStyleSheet("QPushButton { background-color: #4CAF50; color: white; border: none; padding: 5px 10px; }");
+    btnDeclinar->setStyleSheet("QPushButton { background-color: #f44336; color: white; border: none; padding: 5px 10px; }");
 
 
+    // Conectar señales de los botones (necesitarás implementar estos slots)
+    connect(btnAceptar, &QPushButton::clicked, this, [this, contacto]() {
+        manejarSolicitudAceptada(contacto.getUsername());
+    });
+
+    connect(btnDeclinar, &QPushButton::clicked, this, [this, contacto]() {
+        manejarSolicitudDeclinada(contacto.getUsername());
+    });
+
+    // Agregar widgets al layout
+    layout->addWidget(avatar);
+    layout->addWidget(nombre);
+    layout->addWidget(mensaje);
+    layout->addWidget(btnAceptar);
+    layout->addWidget(btnDeclinar);
+    layout->addStretch();
+
+    widget->setLayout(layout);
+    item->setSizeHint(widget->sizeHint());
+    lista->addItem(item);
+    lista->setItemWidget(item, widget);
+    item->setData(Qt::UserRole, contacto.getUsername());
+}
+
+
+void MainWindow::cargarNotificaciones() {
+    // Limpiar la lista de notificaciones primero
+    ui->listNotifs->clear(); // Asume que tienes un QListWidget llamado listaNotificaciones
+
+    QString rutaSolicitudes = "usuarios/" + usuarioActual->getUsername() + "/solicitudes.txt";
+    qDebug() << "Cargando solicitudes de:" << rutaSolicitudes;
+
+    QFile archivoSolicitudes(rutaSolicitudes);
+
+    if (!notifsWatcher->files().contains(rutaSolicitudes)) {
+        notifsWatcher->addPath(rutaSolicitudes);
+    }
+
+    // Si el archivo no existe, crearlo
+    if (!archivoSolicitudes.exists()) {
+        qDebug() << "El archivo de solicitudes no existe. Creando uno nuevo...";
+        if (archivoSolicitudes.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            archivoSolicitudes.close();
+        }
+        return;
+    }
+
+    if (archivoSolicitudes.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qDebug() << "Archivo de solicitudes abierto correctamente";
+
+        QTextStream in(&archivoSolicitudes);
+        while (!in.atEnd()) {
+            QString nombreSolicitante = in.readLine().trimmed();
+            qDebug() << "Procesando solicitud de:" << nombreSolicitante;
+
+            if (!nombreSolicitante.isEmpty()) {
+                Usuario solicitante;
+                if (manejo.getUsuarioPorNombre(nombreSolicitante, solicitante)) {
+                    // Usar la función que ya tenemos para mostrar la notificación
+                    agregarNotifsALista(solicitante, ui->listNotifs);
+                } else {
+                    qDebug() << "Usuario solicitante no encontrado:" << nombreSolicitante;
+                }
+            }
+        }
+        archivoSolicitudes.close();
+        qDebug() << "Total solicitudes cargadas:" << ui->listNotifs->count();
+    } else {
+        qDebug() << "Error al abrir archivo de solicitudes:" << archivoSolicitudes.errorString();
+    }
+}
 
 void MainWindow::guardarMensaje(const QString &archivoPath, const QString &remitente, const QString &mensaje, const QString &fecha)
 {
@@ -517,6 +660,7 @@ void MainWindow::mostrarChatConContacto(const QString &nombreContacto)
 
     ui->stackedWidget_3->setCurrentIndex(0);
     ui->labelNombreContacto->setText(nombreContacto);
+    ui->pushButton_10->setEnabled(true);
 
     Usuario contacto;
     if (manejo.getUsuarioPorNombre(nombreContacto, contacto)) {
@@ -532,9 +676,8 @@ void MainWindow::mostrarChatConContacto(const QString &nombreContacto)
     actualizarMensajes(nombreContacto);
 
 }
-
 void MainWindow::onChatFileChanged(const QString &path) {
-    Q_UNUSED(path);  // Opcional: para evitar advertencias si no usas el parámetro
+    Q_UNUSED(path);
 
     if (!currentContactName.isEmpty()) {
         actualizarMensajes(currentContactName);
@@ -551,13 +694,25 @@ void MainWindow::onContactosFileChanged(const QString &path) {
     Q_UNUSED(path);
     qDebug() << "Archivo de contactos modificado. Actualizando lista...";
 
-    // Forzar recarga del archivo (Qt a veces elimina el watch después de notificar)
     QString contactosPath = "usuarios/" + usuarioActual->getUsername() + "/contactos.txt";
     if (!watcherContactos->files().contains(contactosPath)) {
         watcherContactos->addPath(contactosPath);
     }
 
-    cargarContactos();  // Vuelve a cargar la lista desde el archivo
+    cargarContactos();
+}
+
+void MainWindow::onNotifsFileChanged(const QString &path) {
+    Q_UNUSED(path);
+    qDebug() << "Archivo de contactos modificado. Actualizando lista...";
+
+    QString contactosPath = "usuarios/" + usuarioActual->getUsername() + "/solicitudes.txt";
+    if (!notifsWatcher->files().contains(contactosPath)) {
+        notifsWatcher->addPath(contactosPath);
+    }
+
+    cargarNotificaciones();
+    ui->label_25->setStyleSheet("QLabel { color: blue; }");
 }
 
 void MainWindow::actualizarMensajes(const QString &nombreContacto)
@@ -621,7 +776,39 @@ void MainWindow::actualizarMensajes(const QString &nombreContacto)
     ui->listaMensajes->scrollToBottom();
 }
 
+void MainWindow::actualizarMensaje(const QString &nombreContacto, const QString &filtro) {
+    QString archivoChat = "usuarios/" + usuarioActual->getUsername() + "/chat_" + nombreContacto + ".txt";
+    QFile file(archivoChat);
 
+    ui->textBrowser->clear();
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return;  // Si no hay mensajes, no hacer nada
+    }
+
+    QTextStream in(&file);
+    QStringList mensajes;
+    while (!in.atEnd()) {
+        QString linea = in.readLine();
+
+        // Si es un sticker, lo saltamos
+        if (linea.contains("[STICKER]") || linea.contains(".png]") || linea.contains(".jpg]")) {
+            continue;  // Ignorar esta línea
+        }
+
+        // Si hay filtro, aplicarlo
+        if (filtro.isEmpty() || linea.contains(filtro, Qt::CaseInsensitive)) {
+            mensajes << linea;
+        }
+    }
+    file.close();
+
+    // Mostrar mensajes en el QTextBrowser
+    ui->textBrowser->clear();
+    for (const QString &msg : mensajes) {
+        ui->textBrowser->append(msg);
+    }
+}
 //Enviar mensaje
 void MainWindow::on_pushButton_10_clicked()
 {
@@ -1098,6 +1285,23 @@ void MainWindow::on_pushButton_17_clicked()
 {
     ui->stackedWidget_3->setCurrentIndex(4);
     ui->chatLabel->setText(" ");
+    ui->label_25->setStyleSheet("QLabel { color: gray; }");
+
+    QFile file("usuarios/" + usuarioActual->getUsername() + "/notifs.txt");
+    if (file.open(QIODevice::ReadWrite | QIODevice::Text)) {
+        QString content;
+        QTextStream in(&file);
+        while (!in.atEnd()) {
+            QString line = in.readLine();
+            if (line.endsWith("|1")) {
+                line.replace("|1", "|0");
+            }
+            content += line + "\n";
+        }
+        file.resize(0);
+        file.write(content.toUtf8());
+        file.close();
+    }
 }
 
 
@@ -1170,6 +1374,7 @@ void MainWindow::insertarMensajeEnPosicion(const QString &archivoChat, const QSt
         file.close();
     }
 
+
     // Buscar la posición correcta basada en la fecha
     bool insertado = false;
     QString fechaNuevoMensaje = fechaOriginal; // Formato: "yyyy-MM-dd hh:mm:ss"
@@ -1203,3 +1408,100 @@ void MainWindow::insertarMensajeEnPosicion(const QString &archivoChat, const QSt
         file.close();
     }
 }
+
+void MainWindow::manejarSolicitudAceptada(const QString &nombreContacto) {
+    QString miUsuario = usuarioActual->getUsername();
+
+    // 1. Eliminar la solicitud
+    QString rutaSolicitudes = "usuarios/" + miUsuario + "/solicitudes.txt";
+    eliminarLineaDeArchivo(rutaSolicitudes, nombreContacto);
+
+    // 2. Agregar a contactos mutuamente
+    QFile file1("usuarios/" + miUsuario + "/contactos.txt");
+    QFile file2("usuarios/" + nombreContacto + "/contactos.txt");
+
+    if(file1.open(QIODevice::Append | QIODevice::Text) &&
+        file2.open(QIODevice::Append | QIODevice::Text)) {
+        QTextStream out1(&file1);
+        QTextStream out2(&file2);
+        out1 << nombreContacto << "\n";
+        out2 << miUsuario << "\n";
+        file1.close();
+        file2.close();
+
+        // 3. Crear archivos de chat (versión corregida)
+        QString chat1 = "usuarios/" + miUsuario + "/chat_" + nombreContacto + ".txt";
+        QString chat2 = "usuarios/" + nombreContacto + "/chat_" + miUsuario + ".txt";
+
+        QFile::remove(chat1);
+        QFile::remove(chat2);
+
+        { // Bloque para el primer archivo
+            QFile file(chat1);
+            if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                file.close();
+            }
+        }
+
+        { // Bloque para el segundo archivo
+            QFile file(chat2);
+            if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                file.close();
+            }
+        }
+
+        // 4. Actualizar listas
+        cargarContactos();
+        cargarNotificaciones();
+
+        QMessageBox::information(this, "Contacto agregado",
+                                 nombreContacto + " ha sido agregado a tus contactos");
+    }
+}
+
+void MainWindow::manejarSolicitudDeclinada(const QString &nombreContacto) {
+    QString miUsuario = usuarioActual->getUsername();
+    QString rutaSolicitudes = "usuarios/" + miUsuario + "/solicitudes.txt";
+    eliminarLineaDeArchivo(rutaSolicitudes, nombreContacto);
+    cargarNotificaciones();
+    QMessageBox::information(this, "Solicitud declinada",
+                             "Has declinado la solicitud de " + nombreContacto);
+}
+
+void MainWindow::eliminarLineaDeArchivo(const QString &rutaArchivo, const QString &lineaAEliminar) {
+    QFile archivo(rutaArchivo);
+    if(archivo.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QStringList lineas;
+        QTextStream in(&archivo);
+        while(!in.atEnd()) {
+            QString linea = in.readLine();
+            if(linea.trimmed() != lineaAEliminar) {
+                lineas << linea;
+            }
+        }
+        archivo.close();
+
+        if(archivo.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream out(&archivo);
+            foreach(const QString &linea, lineas) {
+                out << linea << "\n";
+            }
+            archivo.close();
+        }
+    }
+}
+
+
+
+
+void MainWindow::on_pushButton_12_clicked()
+{
+    QString nombreContacto = ui->listWidget->currentItem()->data(Qt::UserRole).toString();
+    QString palabraClave = ui->lineEdit_2->text().trimmed();
+    if (nombreContacto.isEmpty()) {
+        return;  // No hay contacto seleccionado
+    }
+    actualizarMensaje(nombreContacto, palabraClave);  // Filtra mensajes
+    ui->lineEdit_2->clear();
+}
+
